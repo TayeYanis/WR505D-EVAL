@@ -10,8 +10,8 @@
 
       
       <div class="profile-menu">
-        <router-link to="/edit-profile">Edit Profile</router-link> / 
-        <a href="#" @click.prevent="logout">Logout</a>
+        <router-link to="/edit-profile">Edit Profile</router-link> /
+        <router-link to="/login-form">Logout</router-link>
       </div>
     </nav>
     <router-view />
