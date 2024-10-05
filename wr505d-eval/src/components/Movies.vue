@@ -1,10 +1,19 @@
 <template>
   <div class="movies-container">
     <h1>Movies</h1>
-    <div v-if="movies.length > 0">
+    <!-- CHAMP DE REHCHERCHE VIA INPUT APPLIQUATION D'UN PLACEHOLDER POUR INDIQUER CE QUI EST MIT PAR DEFAULT -->
+    <input
+        type="text"
+        v-model="searchQuery"
+        placeholder="Rechercher un film..."
+        class="search-bar"
+    />
+
+    <div v-if="filteredMovies.length > 0">
       <p>Liste des films</p>
       <div class="list-movies">
-        <div v-for="movie in movies" :key="movie.id" class="movie-card">
+        <!-- MISE EN PLACE D'UN BOUCLE POUR LES FILM TROUVER PAR LA RECHERCHE -->
+        <div v-for="movie in filteredMovies" :key="movie.id" class="movie-card">
           <div class="movie-img-container" v-if="movie.media">
             <img :src="movie.media" alt="Affiche du film" class="movie-media" />
           </div>
@@ -39,7 +48,6 @@
     <p v-else>Aucun film trouvé.</p>
   </div>
 </template>
-
 <script>
 import axios from 'axios';
 
@@ -48,8 +56,17 @@ export default {
   data() {
     return {
       movies: [],  // STOCKAGE DE movie sur un tableau
-      error: null  // gestion en cas d'erreur
+      error: null,  // gestion en cas d'erreur
+      searchQuery: ''  // Analyse du texte entrée par l'utilisateur
     };
+  },
+  computed: {
+    filteredMovies() {
+      // FILTRAGE DES FILMS CELON LES CONTENUE DU CHAMP DE RECHERCE
+      return this.movies.filter(movie =>
+          movie.title.toLowerCase().includes(this.searchQuery.toLowerCase())
+      );
+    }
   },
   created() {
     this.fetchMovies();   // Appeler la méthode afin de récuperer les élement de l'entiter Movie
@@ -85,6 +102,16 @@ export default {
 
   h1 {
     margin-bottom: 20px;
+  }
+
+  .search-bar {
+    margin-bottom: 20px;
+    padding: 10px;
+    width: 100%;
+    max-width: 400px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
   }
 
   .list-movies {

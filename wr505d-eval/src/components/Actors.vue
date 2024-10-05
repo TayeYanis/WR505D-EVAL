@@ -1,10 +1,19 @@
 <template>
   <div class="actors-container">
     <h1>Actors</h1>
-    <div v-if="actors.length > 0">
+    <!-- CHAMP DE REHCHERCHE VIA INPUT APPLIQUATION D'UN PLACEHOLDER POUR INDIQUER CE QUI EST MIT PAR DEFAULT -->
+    <input
+        type="text"
+        v-model="searchQuery"
+        placeholder="Rechercher un acteur par prénom ou nom..."
+        class="search-bar"
+    />
+
+    <div v-if="filteredActors.length > 0">
       <p>Liste des acteurs</p>
       <div class="list-actors">
-        <div v-for="actor in actors" :key="actor.id" class="actor-card">
+        <!-- MISE EN PLACE D'UN BOUCLE POUR LES ACTEURS TROUVER PAR LA RECHERCHE -->
+        <div v-for="actor in filteredActors" :key="actor.id" class="actor-card">
           <div class="actor-img-container" v-if="actor.media">
             <img :src="actor.media" alt="Image de l'acteur" class="actor-media" />
           </div>
@@ -20,7 +29,6 @@
           </div>
           <p><strong>Biographie :</strong> {{ actor.bio }}</p>
           <p class="actors-genre"><strong>Genre :</strong> {{ actor.gender }}</p>
-          <!-- Affiche la date de décès seulement si ELLE EST N'EST PAS NUL -->
           <p v-if="actor.deathDate"><strong>Date de décès :</strong> {{ formatDate(actor.deathDate) }}</p>
         </div>
       </div>
@@ -28,6 +36,7 @@
     <p v-else>Aucun acteur trouvé.</p>
   </div>
 </template>
+
 
 <script>
 import axios from 'axios';
@@ -37,11 +46,21 @@ export default {
   data() {
     return {
       actors: [],  // STOCKAGE DE actor sur un tableau
-      error: null  // gestion en cas d'erreur
+      error: null,  // gestion en cas d'erreur
+      searchQuery: ''  // Analyse du texte entrée par l'utilisateur
     };
   },
   created() {
     this.fetchActors();  // Appeler la méthode afin de récuperer les élement de l'entiter Actor
+  },
+  computed: {
+    // FILTRAGE DES ACTEURS CELON LES CONTENUE DU CHAMP DE RECHERCE EN PRENANT EN COMPTE 2 CHAMP
+    filteredActors() {
+      return this.actors.filter(actor => {
+        const fullName = `${actor.firstname} ${actor.lastname}`.toLowerCase();
+        return fullName.includes(this.searchQuery.toLowerCase());
+      });
+    }
   },
   methods: {
     async fetchActors() {
@@ -69,6 +88,16 @@ export default {
 
   h1 {
     margin-bottom: 20px;
+  }
+
+  .search-bar {
+    margin-bottom: 20px;
+    padding: 10px;
+    width: 100%;
+    max-width: 400px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
   }
 
   .list-actors {
