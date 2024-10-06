@@ -64,12 +64,22 @@ export default {
   },
   methods: {
     async fetchActors() {
+      let allActors = [];
+
       try {
-        const response = await axios.get('http://symfony.mmi-troyes.fr:8319/api/actors');
-        this.actors = response.data['hydra:member'];
+        const responsePage1 = await axios.get('http://symfony.mmi-troyes.fr:8319/api/actors?page=1&itemsPerPage=50');
+        const actorsPage1 = responsePage1.data['hydra:member'];
+
+        const responsePage2 = await axios.get('http://symfony.mmi-troyes.fr:8319/api/actors?page=2&itemsPerPage=50');
+        const actorsPage2 = responsePage2.data['hydra:member'];
+
+        allActors = actorsPage1.concat(actorsPage2);
+
+        this.actors = allActors.slice(0, 50);
       } catch (error) {
         this.error = 'Erreur lors de la récupération des acteurs.';
         console.error(error);
+
       }
     },
     formatDate(date) {
