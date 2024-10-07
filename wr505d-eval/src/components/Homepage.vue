@@ -55,10 +55,12 @@
       async fetchLastMovies() {
         try {
           const response = await axios.get('http://symfony.mmi-troyes.fr:8319/api/movies');
-          // Utilisation d'une méthode de trie pour recupérer les derniers films par id de prendre les 4 derniers
+
+          // Utilisation d'une méthode de trie pour recupérer les derniers films par date de sorte et de prendre les 4 derniers
           this.lastMovies = response.data['hydra:member']
-              .sort((a, b) => b.id - a.id)
+              .sort((a, b) => new Date(b.releaseDate) - new Date(a.releaseDate))
               .slice(0, 4);
+
         } catch (error) {
           this.error = 'Erreur lors de la récupération des films.';
           console.error(error);
