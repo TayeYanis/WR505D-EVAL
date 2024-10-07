@@ -1,33 +1,33 @@
 <template>
-  <div class="movie-card">
-    <div class="movie-img-container" v-if="movie.media">
-      <img :src="movie.media" alt="Affiche du film" class="movie-media" />
-    </div>
-    <h2>{{ movie.title }}</h2>
-    <p><strong>Description :</strong> {{ movie.description || 'Pas de description disponible' }}</p>
-    <p><strong>Date de sortie :</strong> {{ formatDate(movie.releaseDate) }}</p>
-    <p><strong>Durée :</strong> {{ movie.duration }} minutes</p>
-    <p><strong>Réalisateur :</strong> {{ movie.director || 'Inconnu' }}</p>
-    <p><strong>Nombre d'entrées :</strong> {{ movie.entries || 'Inconnu' }}</p>
-
-    <div class="rating-container">
-      <p><strong>Note :</strong> {{ movie.rating ? movie.rating + '/10' : 'Non noté' }}</p>
-      <div class="stars">
-        <span v-for="starIndex in 5" :key="starIndex" class="star">
-          <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              :class="{ 'filled': starIndex <= convertRating(movie.rating) }"
-              class="star-icon"
-          >
-            <path
-                d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
-            />
-          </svg>
-        </span>
+  <div
+      :key="movie.id"
+      class="movie-card"
+      @click="goToMovieDetails(movie.id)"
+  >
+      <div class="movie-img-container" v-if="movie.media">
+        <img :src="movie.media" alt="Affiche du film" class="movie-media" />
       </div>
-    </div>
+      <h2>{{ movie.title }}</h2>
+      <p><strong>Description :</strong> {{ movie.description || 'Pas de description disponible' }}</p>
+      <p><strong>Date de sortie :</strong> {{ formatDate(movie.releaseDate) }}</p>
+      <div class="rating-container">
+        <p><strong>Note :</strong> {{ movie.rating ? movie.rating + '/10' : 'Non noté' }}</p>
+        <div class="stars">
+          <span v-for="starIndex in 5" :key="starIndex" class="star">
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                :class="{ 'filled': starIndex <= convertRating(movie.rating) }"
+                class="star-icon"
+            >
+              <path
+                  d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
+              />
+            </svg>
+          </span>
+        </div>
+      </div>
   </div>
 </template>
 
@@ -50,6 +50,9 @@
       convertRating(rating) {
         if (!rating) return 0;
         return Math.round(rating / 2); // Divise la note sur 10 pour l'adapter à une échelle de 5
+      },
+      goToMovieDetails(id) {
+        this.$router.push({ name: 'MovieDetail', params: { id } }); // Rediriger vers la page MovieDetail avec l'ID
       }
     }
   };
@@ -64,6 +67,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    cursor: pointer;
   }
 
   .movie-img-container {
