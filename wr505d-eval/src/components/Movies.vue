@@ -1,7 +1,7 @@
 <template>
   <div class="movies-container">
     <h1>Movies</h1>
-    <!-- CHAMP DE REHCHERCHE VIA INPUT APPLIQUATION D'UN PLACEHOLDER POUR INDIQUER CE QUI EST MIT PAR DEFAULT -->
+    <!-- CHAMP DE RECHERCHE VIA INPUT APPLICATION D'UN PLACEHOLDER POUR INDIQUER CE QUI EST MIT PAR DEFAULT -->
     <input
         type="text"
         v-model="searchQuery"
@@ -12,36 +12,38 @@
     <div v-if="filteredMovies.length > 0">
       <p>Liste des films</p>
       <div class="list-movies">
-        <!-- MISE EN PLACE D'UN BOUCLE POUR LES FILM TROUVER PAR LA RECHERCHE -->
-        <div v-for="movie in filteredMovies" :key="movie.id" class="movie-card">
+        <div
+            v-for="movie in filteredMovies"
+            :key="movie.id"
+            class="movie-card"
+            @click="goToMovieDetails(movie.id)"
+        >
           <div class="movie-img-container" v-if="movie.media">
             <img :src="movie.media" alt="Affiche du film" class="movie-media" />
           </div>
           <h2>{{ movie.title }}</h2>
           <p><strong>Description :</strong> {{ movie.description || 'Pas de description disponible' }}</p>
           <p><strong>Date de sortie :</strong> {{ formatDate(movie.releaseDate) }}</p>
-          <p><strong>Durée :</strong> {{ movie.duration }} minutes</p>
-          <p><strong>Réalisateur :</strong> {{ movie.director || 'Inconnu' }}</p>
-          <p><strong>Nombre d'entrées :</strong> {{ movie.entries || 'Inconnu' }}</p>
           <p><strong>Note :</strong> {{ movie.rating ? movie.rating + '/10' : 'Non noté' }}</p>
           <div class="rating-container">
             <div class="stars">
-              <span v-for="starIndex in 5" :key="starIndex" class="star">
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    :class="{ 'filled': starIndex <= convertRating(movie.rating) }"
-                    class="star-icon"
-                >
-                  <path
-                      d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
-                  />
-                </svg>
-              </span>
+            <span v-for="starIndex in 5" :key="starIndex" class="star">
+              <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  :class="{ 'filled': starIndex <= convertRating(movie.rating) }"
+                  class="star-icon"
+              >
+                <path
+                    d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
+                />
+              </svg>
+            </span>
             </div>
             <span v-if="!movie.rating">Non noté</span>
           </div>
+
         </div>
       </div>
     </div>
@@ -90,6 +92,9 @@ export default {
     convertRating(rating) {
       if (!rating) return 0;
       return Math.round(rating / 2);  // DIVISER PAR 2 POUR PASSER DE 10 A 5
+    },
+    goToMovieDetails(id) {
+      this.$router.push({ name: 'MovieDetail', params: { id } }); // Rediriger vers la page MovieDetail avec l'ID
     }
   }
 };
@@ -128,6 +133,7 @@ export default {
     display: flex;
     flex-direction: column;
     align-items: center;
+    cursor: pointer;
   }
 
   .movie-img-container {

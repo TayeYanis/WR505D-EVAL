@@ -12,24 +12,18 @@
     <div v-if="filteredActors.length > 0">
       <p>Liste des acteurs</p>
       <div class="list-actors">
-        <!-- MISE EN PLACE D'UN BOUCLE POUR LES ACTEURS TROUVER PAR LA RECHERCHE -->
-        <div v-for="actor in filteredActors" :key="actor.id" class="actor-card">
+        <div
+            v-for="actor in filteredActors"
+            :key="actor.id"
+            class="actor-card"
+            @click="goToActorDetails(actor.id)"
+        >
           <div class="actor-img-container" v-if="actor.media">
             <img :src="actor.media" alt="Image de l'acteur" class="actor-media" />
           </div>
           <h2>{{ actor.firstname }} {{ actor.lastname }}</h2>
-          <p><strong>Date de naissance :</strong> {{ formatDate(actor.dob) }}</p>
-          <p><strong>Nationalité :</strong> {{ actor.nationality }}</p>
-          <p><strong>Récompenses :</strong> {{ actor.awards }} prix</p>
-          <div class="awards-container">
-            <span v-if="actor.awards > 0">
-              <img v-for="n in actor.awards" :key="n" src="../assets/trophy.png" alt="Trophée" class="trophy-icon" />
-            </span>
-            <span v-else>Aucune récompense</span>
-          </div>
           <p><strong>Biographie :</strong> {{ actor.bio }}</p>
           <p class="actors-genre"><strong>Genre :</strong> {{ actor.gender }}</p>
-          <p v-if="actor.deathDate"><strong>Date de décès :</strong> {{ formatDate(actor.deathDate) }}</p>
         </div>
       </div>
     </div>
@@ -40,6 +34,7 @@
 
 <script>
 import axios from 'axios';
+
 
 export default {
   name: 'Actors',
@@ -82,16 +77,17 @@ export default {
 
       }
     },
-    formatDate(date) {
-      if (!date) return 'N/A';
-      const options = { year: 'numeric', month: 'long', day: 'numeric' };
-      return new Date(date).toLocaleDateString('fr-FR', options);
+    goToActorDetails(id) {
+      this.$router.push({ name: 'ActorDetail', params: { id } }); // Rediriger vers la page ActorDetail avec l'ID
     }
   }
 };
 </script>
 
 <style scoped>
+  .actor-card {
+    cursor: pointer;
+  }
   .actors-container {
     padding: 20px;
   }
