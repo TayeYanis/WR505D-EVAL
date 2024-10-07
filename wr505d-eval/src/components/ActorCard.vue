@@ -1,21 +1,15 @@
 <template>
-  <div class="actor-card">
+  <div
+      :key="actor.id"
+      class="actor-card"
+      @click="goToActorDetails(actor.id)"
+  >
     <div class="actor-img-container" v-if="actor.media">
       <img :src="actor.media" alt="Image de l'acteur" class="actor-media" />
     </div>
     <h2>{{ actor.firstname }} {{ actor.lastname }}</h2>
-    <p><strong>Date de naissance :</strong> {{ formatDate(actor.dob) }}</p>
-    <p><strong>Nationalité :</strong> {{ actor.nationality }}</p>
-    <p><strong>Récompenses :</strong> {{ actor.awards }} prix</p>
-    <div class="awards-container">
-      <span v-if="actor.awards > 0">
-        <img v-for="(n, index) in actor.awards" :key="index" src="../assets/trophy.png" alt="Trophée" class="trophy-icon" />
-      </span>
-      <span v-else>Aucune récompense</span>
-    </div>
     <p><strong>Biographie :</strong> {{ actor.bio }}</p>
     <p class="actors-genre"><strong>Genre :</strong> {{ actor.gender }}</p>
-    <p v-if="actor.deathDate"><strong>Date de décès :</strong> {{ formatDate(actor.deathDate) }}</p>
   </div>
 </template>
 
@@ -34,6 +28,9 @@
         const options = { year: 'numeric', month: 'long', day: 'numeric' };
         return new Date(date).toLocaleDateString('fr-FR', options);
       },
+      goToActorDetails(id) {
+        this.$router.push({ name: 'ActorDetail', params: { id } }); // Rediriger vers la page ActorDetail avec l'ID
+      }
     },
   };
 </script>
@@ -47,6 +44,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    cursor: pointer;
   }
 
   .actor-img-container {
