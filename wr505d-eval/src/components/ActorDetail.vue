@@ -20,6 +20,18 @@
       <p class="actors-genre"><strong>Genre :<br></strong> {{ actor.gender }}</p>
       <p><strong>Biographie :<br></strong> {{ actor.bio }}</p>
       <p v-if="actor.deathDate"><strong>Date de décès :<br></strong> {{ formatDate(actor.deathDate) }}</p>
+      <!-- Liste des films liés à l'acteur par ID -->
+      <div v-if="actorMovies.length > 0" class="actor-movies">
+        <h2>Films liés à cet acteur</h2>
+        <div class="movies-list">
+          <MovieCard
+              v-for="movie in actorMovies"
+              :key="movie.id"
+              :movie="movie"
+          />
+        </div>
+      </div>
+      <p v-else>Pas de films trouvés pour cet acteur.</p>
     </div>
     <p v-else>Chargement...</p>
   </div>
@@ -27,13 +39,18 @@
 
 <script>
   import axios from 'axios';
+  import MovieCard from '@/components/MovieCard.vue';
 
   export default {
     name: 'ActorDetail',
+    components: {
+      MovieCard,  // Mettre le components MovieCard ici pour afficher chaque film
+    },
     data() {
       return {
         actor: null,  // STOCKAGE DE actor sur un tableau
-        error: null   // gestion en cas d'erreur
+        error: null,   // gestion en cas d'erreur
+        actorMovies: []  // liste films liée l'acteur sélectionner
       };
     },
     created() {
@@ -45,11 +62,28 @@
         try {
           const response = await axios.get(`http://symfony.mmi-troyes.fr:8319/api/actors/${actorId}`);
           this.actor = response.data;
+          // Appeler la méthode fetchMoviesForActor en passant les URLs des films
+          if (response.data.movies) {
+            this.fetchMoviesForActor(response.data.movies);
+          }
         } catch (error) {
           this.error = 'Erreur lors de la récupération des détails de l\'acteur.';
           console.error(error);
         }
       },
+      async fetchMoviesForActor(movieUrls) {
+        try {
+          const movies = await Promise.all(
+              movieUrls.map(url => axios.get(`http://symfony.mmi-troyes.fr:8319${url}`).then(res => res.data))
+          );
+          this.actorMovies = movies;
+        } catch (error) {
+          this.error = 'Erreur lors de la récupération des films de l\'acteur.';
+          console.error(error);
+        }
+      },
+
+
       formatDate(date) {
         if (!date) return 'N/A';
         const options = { year: 'numeric', month: 'long', day: 'numeric' };
@@ -127,5 +161,16 @@
 
   strong {
     font-weight: bold;
+  }
+
+  .actor-movies {
+    margin-top: 20px;
+    width: 100%;
+  }
+
+  .movies-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
   }
 </style>

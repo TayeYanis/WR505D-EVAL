@@ -31,6 +31,28 @@
           </div>
           <span v-if="!movie.rating">Non noté</span>
         </div>
+        <!-- Liste des acteurs liés au film par ID -->
+        <div v-if="movieActors.length > 0" class="movie-actors">
+          <h2>Acteurs liés à ce film</h2>
+          <div class="actors-list">
+            <ActorCard
+                v-for="actor in movieActors"
+                :key="actor.id"
+                :actor="actor"
+            />
+          </div>
+        </div>
+        <!-- Liste des catégories liés au film par ID -->
+        <div v-if="movieCategory.length > 0">
+          <h2>Catégories :</h2>
+          <div class="category-list">
+            <CategoryCard
+                v-for="category in movieCategory"
+                :key="category.id"
+                :category="category"
+            />
+          </div>
+        </div>
       </div>
       <p v-else>Chargement...</p>
     </div>
@@ -38,13 +60,21 @@
 
 <script>
   import axios from 'axios';
+  import ActorCard from '@/components/ActorCard.vue';
+  import CategoryCard from '@/components/CategoryCard.vue';
 
   export default {
     name: 'MovieDetail',
+    components: {
+      ActorCard, // Mettre le components ActorCard ici pour afficher chaque acteurs
+      CategoryCard, // Mettre le components CategoryCard ici pour afficher chaque categories
+    },
     data() {
       return {
         movie: null,  // STOCKAGE DE movie sur un tableau
-        error: null   // gestion en cas d'erreur
+        error: null,   // gestion en cas d'erreur
+        movieActors: [], // liste acteurs liée aux film sélectionner
+        movieCategory: [] // liste categories liée aux film sélectionner
       };
     },
     created() {
@@ -55,12 +85,49 @@
         const movieId = this.$route.params.id; // Récupération de l'ID du film depuis l'URL lors du clic
         try {
           const response = await axios.get(`http://symfony.mmi-troyes.fr:8319/api/movies/${movieId}`);
+          console.log(response.data);
           this.movie = response.data;
+          // Appeler la méthode fetchActorsForMovie en passant les URLs des acteurs
+          if (response.data.actors) {
+            this.fetchActorsForMovie(response.data.actors);
+          }
+
+          // Appeler la méthode fetchActorsForMovie en passant les URLs des categories
+          if (response.data.categories) {
+            this.movieCategory = await Promise.all(
+                response.data.categories.map(url => this.fetchCategoryForMovie(url))
+            );
+          }
+
         } catch (error) {
           this.error = 'Erreur lors de la récupération des détails du film.';
           console.error(error);
         }
       },
+
+      async fetchActorsForMovie(actorUrls) {
+        try {
+          const actors = await Promise.all(
+              actorUrls.map(url => axios.get(`http://symfony.mmi-troyes.fr:8319${url}`).then(res => res.data))
+          );
+          this.movieActors = actors;
+        } catch (error) {
+          this.error = 'Erreur lors de la récupération des acteurs du film.';
+          console.error(error);
+        }
+      },
+
+      async fetchCategoryForMovie(categoryUrl) {
+        try {
+          const response = await axios.get(`http://symfony.mmi-troyes.fr:8319${categoryUrl}`);
+          return response.data;
+        } catch (error) {
+          this.error = 'Erreur lors de la récupération de la catégorie du film.';
+          console.error(error);
+        }
+      },
+
+
       formatDate(date) {
         if (!date) return 'N/A';
         const options = { year: 'numeric', month: 'long', day: 'numeric' };
