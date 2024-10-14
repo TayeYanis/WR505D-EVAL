@@ -2,18 +2,35 @@
   <div class="movies-container">
     <h1>Movies</h1>
     <!-- CHAMP DE RECHERCHE VIA INPUT APPLICATION D'UN PLACEHOLDER POUR INDIQUER CE QUI EST MIT PAR DEFAULT -->
-    <input
-        type="text"
-        v-model="searchQuery"
-        placeholder="Rechercher un film..."
-        class="search-bar"
-    />
+    <div class="search-pagination">
+      <input
+          type="text"
+          v-model="searchQuery"
+          placeholder="Rechercher un film..."
+          class="search-bar"
+      />
+      <div class="pagination-controls">
+        <button @click="prevPage" :disabled="currentPage === 1">←</button>
+        <span>Page {{ currentPage }} / {{ totalPages }}</span>
+        <button @click="nextPage" :disabled="currentPage === totalPages">→</button>
+      </div>
+      <!-- CHAMP DE SAISI DE NAVIGATION DIRECT -->
+      <div class="page-input-container">
+        <input
+            type="number"
+            v-model.number="pageInput"
+            placeholder="Aller à la page"
+            @keyup.enter="goToPage"
+            class="page-input"
+        />
+      </div>
+    </div>
 
-    <div v-if="filteredMovies.length > 0">
+    <div v-if="paginatedMovies.length > 0">
       <p>Liste des films</p>
       <div class="list-movies">
         <div
-            v-for="movie in filteredMovies"
+            v-for="movie in paginatedMovies"
             :key="movie.id"
             class="movie-card"
             @click="goToMovieDetails(movie.id)"
@@ -27,77 +44,111 @@
           <p><strong>Note :</strong> {{ movie.rating ? movie.rating + '/10' : 'Non noté' }}</p>
           <div class="rating-container">
             <div class="stars">
-            <span v-for="starIndex in 5" :key="starIndex" class="star">
-              <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                  :class="{ 'filled': starIndex <= convertRating(movie.rating) }"
-                  class="star-icon"
-              >
-                <path
-                    d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
-                />
-              </svg>
-            </span>
+              <span v-for="starIndex in 5" :key="starIndex" class="star">
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    :class="{ 'filled': starIndex <= convertRating(movie.rating) }"
+                    class="star-icon"
+                >
+                  <path
+                      d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
+                  />
+                </svg>
+              </span>
             </div>
             <span v-if="!movie.rating">Non noté</span>
           </div>
-
         </div>
       </div>
     </div>
     <p v-else>Aucun film trouvé.</p>
   </div>
 </template>
-<script>
-import axios from 'axios';
 
-export default {
-  name: 'Movies',
-  data() {
-    return {
-      movies: [],  // STOCKAGE DE movie sur un tableau
-      error: null,  // gestion en cas d'erreur
-      searchQuery: ''  // Analyse du texte entrée par l'utilisateur
-    };
-  },
-  computed: {
-    filteredMovies() {
-      // FILTRAGE DES FILMS CELON LES CONTENUE DU CHAMP DE RECHERCE
-      return this.movies.filter(movie =>
-          movie.title.toLowerCase().includes(this.searchQuery.toLowerCase())
-      );
-    }
-  },
-  created() {
-    this.fetchMovies();   // Appeler la méthode afin de récuperer les élement de l'entiter Movie
-  },
-  methods: {
-    async fetchMovies() {
-      try {
-        const response = await axios.get('http://symfony.mmi-troyes.fr:8319/api/movies');
-        this.movies = response.data['hydra:member'];
-      } catch (error) {
-        this.error = 'Erreur lors de la récupération des films.';
-        console.error(error);
+<script>
+  import axios from 'axios';
+
+  export default {
+    name: 'Movies',
+    data() {
+      return {
+        movies: [],  // STOCKAGE DE movie sur un tableau
+        error: null,  // gestion en cas d'erreur
+        searchQuery: '',  // Analyse du texte entrée par l'utilisateur
+        currentPage: 1,  // par default de la pagination
+        itemsPerPage: 8,  // définissemnt du nombre de films limite par page
+        pageInput: ''  // pour mettre la saisie du numéro de navigation
+      };
+    },
+    created() {
+      this.fetchMovies();   // Appeler la méthode afin de récupérer les élements de l'entité Movie
+    },
+    computed: {
+      filteredMovies() {
+        // FILTRAGE DES FILMS SELON LES CONTENUS DU CHAMP DE RECHERCHE
+        return this.movies.filter(movie =>
+            movie.title.toLowerCase().includes(this.searchQuery.toLowerCase())
+        );
+      },
+      paginatedMovies() {
+        const start = (this.currentPage - 1) * this.itemsPerPage;
+        const end = start + this.itemsPerPage;
+        return this.filteredMovies.slice(start, end);
+      },
+      totalPages() {
+        return Math.ceil(this.filteredMovies.length / this.itemsPerPage);
       }
     },
-    formatDate(date) {
-      if (!date) return 'N/A';
-      const options = { year: 'numeric', month: 'long', day: 'numeric' };
-      return new Date(date).toLocaleDateString('fr-FR', options);
+    methods: {
+      async fetchMovies() {
+        try {
+          const response = await axios.get('http://symfony.mmi-troyes.fr:8319/api/movies');
+          this.movies = response.data['hydra:member'];
+        } catch (error) {
+          this.error = 'Erreur lors de la récupération des films.';
+          console.error(error);
+        }
+      },
+      formatDate(date) {
+        if (!date) return 'N/A';
+        const options = { year: 'numeric', month: 'long', day: 'numeric' };
+        return new Date(date).toLocaleDateString('fr-FR', options);
+      },
+      convertRating(rating) {
+        if (!rating) return 0;
+        return Math.round(rating / 2);  // DIVISER PAR 2 POUR PASSER DE 10 À 5
+      },
+      goToMovieDetails(id) {
+        this.$router.push({ name: 'MovieDetail', params: { id } }); // Rediriger vers la page MovieDetail avec l'ID
+      },
+      prevPage() {
+        if (this.currentPage > 1) {
+          this.currentPage--;
+        }
+      },
+      nextPage() {
+        if (this.currentPage < this.totalPages) {
+          this.currentPage++;
+        }
+      },
+      goToPage() {
+        if (this.pageInput >= 1 && this.pageInput <= this.totalPages) {
+          this.currentPage = this.pageInput;
+          this.pageInput = '';  // réinitialisation de la valeur à nul après l'entrée d'une page
+        } else {
+          alert(`Veuillez entrer un numéro de page valide entre 1 et ${this.totalPages}`);
+        }
+      }
     },
-    // TRANSFORMER LA NOTE DE 10 EN NOTE DE 5
-    convertRating(rating) {
-      if (!rating) return 0;
-      return Math.round(rating / 2);  // DIVISER PAR 2 POUR PASSER DE 10 A 5
-    },
-    goToMovieDetails(id) {
-      this.$router.push({ name: 'MovieDetail', params: { id } }); // Rediriger vers la page MovieDetail avec l'ID
+    watch: {
+      // Si la recherche change, on retourne à la première page
+      searchQuery() {
+        this.currentPage = 1;
+      }
     }
-  }
-};
+  };
 </script>
 
 <style scoped>
@@ -117,6 +168,33 @@ export default {
     font-size: 16px;
     border: 1px solid #ccc;
     border-radius: 4px;
+  }
+
+  .search-pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .pagination-controls {
+    display: flex;
+    align-items: center;
+  }
+
+  .pagination-controls button {
+    background-color: #4caf50;
+    border: none;
+    color: white;
+    padding: 10px;
+    margin: 0 5px;
+    cursor: pointer;
+    border-radius: 4px;
+  }
+
+  .pagination-controls button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
   }
 
   .list-movies {
@@ -185,5 +263,32 @@ export default {
 
   .star-icon.filled {
     color: #ffc107;
+  }
+
+  .page-input-container {
+    display: flex;
+    align-items: center;
+    margin-left: 20px;
+  }
+
+  .page-input {
+    padding: 8px;
+    font-size: 14px;
+    width: 80px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    text-align: center;
+  }
+
+  .page-input:focus {
+    outline: none;
+    border-color: #4caf50;
+  }
+
+  .page-input-container::before {
+    content: "Aller à la page :";
+    margin-right: 10px;
+    font-size: 14px;
+    color: #333;
   }
 </style>
