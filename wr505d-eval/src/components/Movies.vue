@@ -64,6 +64,127 @@
       </div>
     </div>
     <p v-else>Aucun film trouvé.</p>
+
+    <button @click="showModal = true" class="add-movie-button">Ajouter un film</button>
+
+    <div v-if="showModal" class="modal">
+      <div class="modal-content">
+        <span class="close" @click="closeModal">&times;</span>
+        <h2>Ajouter un film</h2>
+        <form @submit.prevent="addMovie" class="formulaire">
+          <input
+              type="text"
+              v-model="newMovie.title"
+              placeholder="Titre (3-250 caractères)"
+              required
+              class="movie-input"
+          />
+          <p class="input-info">Doit contenir entre 3 et 250 caractères.</p>
+
+          <textarea
+              v-model="newMovie.description"
+              placeholder="Description"
+              required
+              class="movie-textarea"
+          ></textarea>
+
+          <input
+              type="date"
+              v-model="newMovie.releaseDate"
+              placeholder="Date de sortie"
+              required
+              class="movie-input"
+          />
+
+          <input
+              type="number"
+              v-model="newMovie.duration"
+              placeholder="Durée (50-200 minutes)"
+              min="50"
+              max="200"
+              required
+              class="movie-input"
+          />
+          <p class="input-info">La durée doit être comprise entre 50 et 200 minutes.</p>
+
+          <input
+              type="number"
+              v-model="newMovie.entries"
+              placeholder="Entrées (0-1000)"
+              min="0"
+              max="1000"
+              required
+              class="movie-input"
+          />
+          <p class="input-info">Le nombre d'entrées doit être compris entre 0 et 1000.</p>
+
+          <input
+              type="text"
+              v-model="newMovie.director"
+              placeholder="Réalisateur (3-255 caractères)"
+              required
+              class="movie-input"
+          />
+          <p class="input-info">Doit contenir entre 3 et 255 caractères.</p>
+
+          <input
+              type="text"
+              v-model="newMovie.rating"
+              placeholder="Note (0-10)"
+              @input="validateRatingInput"
+              required
+              class="movie-input"
+          />
+          <p class="input-info">La note doit être comprise entre 0 et 10.</p>
+
+          <input
+              type="text"
+              v-model="newMovie.media"
+              placeholder="URL de l'affiche"
+              required
+              class="movie-input"
+          />
+          <p class="input-info">Doit être une URL valide (ex : http://image.com).</p>
+
+          <div class="dropdown">
+            <h3>Acteurs</h3>
+            <div class="dropdown-content">
+              <div class="dropdown-scroll">
+                <label v-for="actor in actors" :key="actor.id" :for="'actor-' + actor.id">
+                  <input
+                      type="checkbox"
+                      :id="'actor-' + actor.id"
+                      :value="actor.id"
+                      v-model="selectedActors"
+                  />
+                  {{ actor.firstname }} {{ actor.lastname }}
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- DROPDOWN POUR SELECTIONNER LES CATEGORIES -->
+          <div class="dropdown">
+            <h3>Catégories</h3>
+            <div class="dropdown-content">
+              <div class="dropdown-scroll">
+                <label v-for="category in categories" :key="category.id" :for="'category-' + category.id">
+                  <input
+                      type="checkbox"
+                      :id="'category-' + category.id"
+                      :value="category.id"
+                      v-model="selectedCategories"
+                  />
+                  {{ category.title }}
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="add-movie-button">Ajouter le film</button>
+        </form>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -79,11 +200,26 @@
         searchQuery: '',  // Analyse du texte entrée par l'utilisateur
         currentPage: 1,  // par default de la pagination
         itemsPerPage: 8,  // définissemnt du nombre de films limite par page
-        pageInput: ''  // pour mettre la saisie du numéro de navigation
+        pageInput: '',  // pour mettre la saisie du numéro de navigation
+        showModal: false,
+        newMovie: {
+          title: '',
+          description: '',
+          releaseDate: '',
+          duration: null,
+          entries: null,
+          director: '',
+          rating: null,
+          media: '',
+        },
+        selectedActors: [],
+        selectedCategories: [],
+        actors: [],
+        categories: [],
       };
     },
     created() {
-      this.fetchMovies();   // Appeler la méthode afin de récupérer les élements de l'entité Movie
+      this.fetchMovies();   // Appeler la méthode afin de récupérer les éléments de l'entité Movie
     },
     computed: {
       filteredMovies() {
@@ -101,6 +237,11 @@
         return Math.ceil(this.filteredMovies.length / this.itemsPerPage);
       }
     },
+    mounted() {
+      this.fetchActors();
+      this.fetchCategories();
+    },
+
     methods: {
       async fetchMovies() {
         try {
@@ -110,6 +251,9 @@
           this.error = 'Erreur lors de la récupération des films.';
           console.error(error);
         }
+      },
+      validateRatingInput() {
+        this.newMovie.rating = this.newMovie.rating.replace(/[^0-9,]/g, '');
       },
       formatDate(date) {
         if (!date) return 'N/A';
@@ -140,14 +284,95 @@
         } else {
           alert(`Veuillez entrer un numéro de page valide entre 1 et ${this.totalPages}`);
         }
-      }
+      },
+      async fetchActors() {
+        try {
+          const response = await axios.get('http://symfony.mmi-troyes.fr:8319/api/actors');
+          this.actors = response.data['hydra:member'];
+        } catch (error) {
+          console.error('Erreur lors de la récupération des acteurs:', error);
+        }
+      },
+      async fetchCategories() {
+        try {
+          const response = await axios.get('http://symfony.mmi-troyes.fr:8319/api/categories');
+          this.categories = response.data['hydra:member'];
+        } catch (error) {
+          console.error('Erreur lors de la récupération des catégories:', error);
+        }
+      },
+      async addMovie() {
+        try {
+          if (!this.newMovie.title || !this.newMovie.description || !this.newMovie.releaseDate || !this.newMovie.duration || !this.newMovie.entries || !this.newMovie.director || !this.newMovie.rating || !this.newMovie.media) {
+            alert("Veuillez remplir tous les champs obligatoires.");
+            return;
+          }
+
+          if (this.newMovie.duration < 50 || this.newMovie.duration > 200) {
+            alert("La durée doit être comprise entre 50 et 200 minutes.");
+            return;
+          }
+
+          if (this.newMovie.entries < 0 || this.newMovie.entries > 1000) {
+            alert("Le nombre d'entrées doit être compris entre 0 et 1000.");
+            return;
+          }
+
+          const rating = parseFloat(this.newMovie.rating.replace(',', '.'));
+          if (rating < 0 || rating > 10) {
+            alert("La note doit être comprise entre 0 et 10.");
+            return;
+          }
+
+          const actorIRIs = this.selectedActors.map(actorId => `/api/actors/${actorId}`);
+          const categoryIRIs = this.selectedCategories.map(categoryId => `/api/categories/${categoryId}`);
+
+          const newMovieData = {
+            title: this.newMovie.title,
+            description: this.newMovie.description,
+            releaseDate: this.newMovie.releaseDate,
+            duration: parseInt(this.newMovie.duration),
+            entries: parseInt(this.newMovie.entries),
+            director: this.newMovie.director,
+            rating: rating,
+            media: this.newMovie.media,
+            actors: actorIRIs,
+            categories: categoryIRIs,
+          };
+
+          const response = await axios.post('http://symfony.mmi-troyes.fr:8319/api/movies', newMovieData);
+          this.movies.push(response.data);
+          this.resetNewMovie();
+          this.closeModal();
+        } catch (error) {
+          this.error = 'Erreur lors de l\'ajout du film.';
+          console.error(error.response.data);
+        }
+      },
+      resetNewMovie() {
+        this.newMovie = {
+          title: '',
+          description: '',
+          releaseDate: '',
+          duration: null,
+          entries: null,
+          director: '',
+          rating: null,
+          media: '',
+        };
+        this.selectedActors = [];
+        this.selectedCategories = [];
+      },
+      closeModal() {
+        this.showModal = false;
+      },
     },
     watch: {
       // Si la recherche change, on retourne à la première page
       searchQuery() {
         this.currentPage = 1;
       }
-    }
+    },
   };
 </script>
 
@@ -276,19 +501,72 @@
     font-size: 14px;
     width: 80px;
     border: 1px solid #ccc;
+  }
+
+  .add-movie-button {
+    background-color: #4caf50;
+    color: white;
+    padding: 10px;
+    border: none;
     border-radius: 4px;
-    text-align: center;
+    cursor: pointer;
+    margin-top: 20px;
   }
 
-  .page-input:focus {
-    outline: none;
-    border-color: #4caf50;
+  .modal {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
   }
 
-  .page-input-container::before {
-    content: "Aller à la page :";
-    margin-right: 10px;
-    font-size: 14px;
-    color: #333;
+  .modal-content {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+
+  .close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+  }
+
+  .close:hover,
+  .close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .movie-input,
+  .movie-textarea {
+    width: calc(100% - 20px);
+    margin-bottom: 10px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+
+  .movie-textarea {
+    height: 100px;
+  }
+
+  .input-info {
+    font-size: 0.9em;
+    font-weight: bold;
+    color: gray;
+    margin-bottom: 10px;
   }
 </style>
