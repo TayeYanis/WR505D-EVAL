@@ -36,6 +36,27 @@
       </li>
     </ul>
     <p v-else>Il n'y a aucune catégorie trouvée.</p>
+    <button @click="showModal = true" class="add-category-button">Ajouter une catégorie</button>
+
+
+    <div v-if="showModal" class="modal">
+      <div class="modal-content">
+        <span class="close" @click="closeModal">&times;</span>
+        <h2>Ajouter une catégorie</h2>
+        <form @submit.prevent="addCategory" class="formulaire">
+          <input
+              type="text"
+              v-model="newCategory.title"
+              placeholder="Titre de la catégorie"
+              required
+              class="category-input"
+          />
+          <p class="input-info">Le titre doit contenir entre 3 et 255 caractères.</p>
+
+          <button type="submit" class="add-category-button">Ajouter la catégorie</button>
+        </form>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -51,7 +72,11 @@
         searchQuery: '',  // Analyse du texte entrée par l'utilisateur
         currentPage: 1,  // par default de la pagination
         itemsPerPage: 3,  // définissemnt du nombre de films limite par page
-        pageInput: ''     // pour mettre la saisie du numéro de navigation
+        pageInput: '',     // pour mettre la saisie du numéro de navigation
+        showModal: false,
+        newCategory: {
+          title: ''
+        }
       };
     },
     computed: {
@@ -85,6 +110,29 @@
           this.error = 'Erreur lors de la récupération des catégories.';
           console.error(error);
         }
+      },
+      async addCategory() {
+        try {
+          if (!this.newCategory.title || this.newCategory.title.length < 3 || this.newCategory.title.length > 255) {
+            alert('Le titre doit contenir entre 3 et 255 caractères.');
+            return;
+          }
+
+          const response = await axios.post('http://symfony.mmi-troyes.fr:8319/api/categories', this.newCategory);
+          this.categories.push(response.data);
+          this.resetNewCategory();
+          this.closeModal();
+        } catch (error) {
+          console.error('Erreur lors de l\'ajout de la catégorie :', error);
+        }
+      },
+      resetNewCategory() {
+        this.newCategory = {
+          title: ''
+        };
+      },
+      closeModal() {
+        this.showModal = false;
       },
       // NAVIGUER À LA PAGE PRÉCÉDENTE
       prevPage() {
@@ -133,6 +181,13 @@
     margin-bottom: 20px;
   }
 
+  .search-pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
   .search-bar {
     padding: 10px;
     width: 100%;
@@ -164,12 +219,14 @@
     cursor: not-allowed;
   }
 
-  ul {
+  ul,
+  .list-categories {
     list-style-type: none;
     padding: 0;
   }
 
-  li {
+  li,
+  .category-item {
     padding: 10px;
     border-bottom: 1px solid #ccc;
   }
@@ -199,5 +256,53 @@
     margin-right: 10px;
     font-size: 14px;
     color: #333;
+  }
+
+  .add-category-button {
+    background-color: #4caf50;
+    border: none;
+    color: white;
+    padding: 10px;
+    cursor: pointer;
+    border-radius: 4px;
+    margin-top: 20px;
+  }
+
+  .modal {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+  }
+
+  .modal-content {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    width: 400px;
+  }
+
+  .close {
+    float: right;
+    font-size: 28px;
+    cursor: pointer;
+  }
+
+  .category-input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+
+  .input-info {
+    font-size: 12px;
+    color: #666;
   }
 </style>
