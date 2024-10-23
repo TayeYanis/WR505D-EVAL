@@ -368,7 +368,7 @@
       },
     },
     watch: {
-      // Si la recherche change, on retourne à la première page
+
       searchQuery() {
         this.currentPage = 1;
       }
@@ -569,4 +569,23 @@
     color: gray;
     margin-bottom: 10px;
   }
+
+
+  /*     display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-gap: 20px;
+    width: 70%;
+
+    movie-card {
+      padding: 5px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background-color: #f9f9f9;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+    }
+
+   */
 </style>

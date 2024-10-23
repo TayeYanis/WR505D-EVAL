@@ -33,12 +33,26 @@
       <!-- MISE EN PLACE D'UN BOUCLE POUR LES CATEGORIES TROUVER PAR LA RECHERCHE -->
       <li v-for="category in paginatedCategories" :key="category.id">
         {{ category.title }}
+        <button @click="openEditModal(category)" class="edit-category-button">Éditer</button>
+        <button @click="confirmDeleteCategory(category.id)" class="delete-category-button">Supprimer</button>
       </li>
     </ul>
+
+    <!-- MODAL DE CONFIRMATION DE SUPPRESSION -->
+    <div v-if="showDeleteModal" class="modal">
+      <div class="modal-content">
+        <span class="close" @click="closeDeleteModal">&times;</span>
+        <h2>Confirmation de suppression</h2>
+        <p>Voulez-vous vraiment supprimer la catégorie avec l'ID {{ categoryToDelete }} ?</p>
+        <button @click="deleteCategory" class="confirm-delete-button">Oui, supprimer</button>
+        <button @click="closeDeleteModal" class="cancel-delete-button">Annuler</button>
+      </div>
+    </div>
+
     <p v-else>Il n'y a aucune catégorie trouvée.</p>
     <button @click="showModal = true" class="add-category-button">Ajouter une catégorie</button>
 
-
+    <!-- MODAL POUR AJOUTER UNE CATEGORIE -->
     <div v-if="showModal" class="modal">
       <div class="modal-content">
         <span class="close" @click="closeModal">&times;</span>
@@ -57,252 +71,327 @@
         </form>
       </div>
     </div>
+
+    <!-- MODAL POUR ÉDITER UNE CATEGORIE -->
+    <div v-if="showEditModal" class="modal">
+      <div class="modal-content">
+        <span class="close" @click="closeEditModal">&times;</span>
+        <h2>Éditer la catégorie</h2>
+        <form @submit.prevent="editCategory" class="formulaire">
+          <input
+              type="text"
+              v-model="editCategoryData.title"
+              placeholder="Titre de la catégorie"
+              required
+              class="category-input"
+          />
+          <p class="input-info">Le titre doit contenir entre 3 et 255 caractères.</p>
+          <input
+              type="text"
+              v-model="editCategoryData.updated_at"
+              placeholder="Date de mise à jour"
+              readonly
+              class="category-input"
+          />
+          <p class="input-info">Date de mise à jour actuelle</p>
+
+          <button type="submit" class="add-category-button">Sauvegarder les modifications</button>
+        </form>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
-  import axios from 'axios';
+import axios from 'axios';
 
-  export default {
-    name: 'Categories',
-    data() {
-      return {
-        categories: [],  // STOCKAGE DE category sur un tableau
-        error: null,      // gestion en cas d'erreur
-        searchQuery: '',  // Analyse du texte entrée par l'utilisateur
-        currentPage: 1,  // par default de la pagination
-        itemsPerPage: 3,  // définissemnt du nombre de films limite par page
-        pageInput: '',     // pour mettre la saisie du numéro de navigation
-        showModal: false,
-        newCategory: {
-          title: ''
+export default {
+  name: 'Categories',
+  data() {
+    return {
+      categories: [],  // STOCKAGE DE category sur un tableau
+      error: null,      // gestion en cas d'erreur
+      searchQuery: '',  // Analyse du texte entrée par l'utilisateur
+      currentPage: 1,  // par default de la pagination
+      itemsPerPage: 3,  // définissemnt du nombre de films limite par page
+      pageInput: '',     // pour mettre la saisie du numéro de navigation
+      showModal: false,
+      showEditModal: false,
+      showDeleteModal: false,
+      categoryToDelete: null,   // stockage de l'id à supprimer
+      newCategory: {
+        title: ''
+      },
+      editCategoryData: {
+        id: null,
+        title: '',
+        updated_at: new Date().toISOString() // Initialiser avec la date actuelle
+      }
+    };
+  },
+  computed: {
+    // FILTRAGE DES CATEGORIES CELON LES CONTENUE DU CHAMP DE RECHERCHE
+    filteredCategories() {
+      return this.categories.filter(category =>
+          category.title.toLowerCase().includes(this.searchQuery.toLowerCase())
+      );
+    },
+    // CATEGORIES PAGINÉES SELON LA PAGE ACTUELLE
+    paginatedCategories() {
+      const start = (this.currentPage - 1) * this.itemsPerPage;
+      const end = start + this.itemsPerPage;
+      return this.filteredCategories.slice(start, end);
+    },
+    // CALCUL DU NOMBRE TOTAL DE PAGES
+    totalPages() {
+      return Math.ceil(this.filteredCategories.length / this.itemsPerPage);
+    }
+  },
+  created() {
+    this.fetchCategories();  // Appeler la méthode afin de récupérer les éléments de l'entité Catégorie
+  },
+  methods: {
+    // RÉCUPÉRATION DES CATEGORIES
+    async fetchCategories() {
+      try {
+        const response = await axios.get('http://symfony.mmi-troyes.fr:8319/api/categories');
+        this.categories = response.data['hydra:member'];
+      } catch (error) {
+        this.error = 'Erreur lors de la récupération des catégories.';
+        console.error(error);
+      }
+    },
+
+    // Ouvrir le modal de confirmation de suppression
+    confirmDeleteCategory(id) {
+      this.categoryToDelete = id;
+      this.showDeleteModal = true;
+    },
+    // Fermer le modal de suppression
+    closeDeleteModal() {
+      this.showDeleteModal = false;
+      this.categoryToDelete = null;
+    },
+    // Supprimer la catégorie
+    async deleteCategory() {
+      try {
+        await axios.delete(`http://symfony.mmi-troyes.fr:8319/api/categories/${this.categoryToDelete}`);
+        this.categories = this.categories.filter(category => category.id !== this.categoryToDelete);
+        this.closeDeleteModal();
+      } catch (error) {
+        console.error('Erreur lors de la suppression de la catégorie :', error);
+      }
+    },
+
+    async addCategory() {
+      try {
+        if (!this.newCategory.title || this.newCategory.title.length < 3 || this.newCategory.title.length > 255) {
+          alert('Le titre doit contenir entre 3 et 255 caractères.');
+          return;
         }
+
+        const response = await axios.post('http://symfony.mmi-troyes.fr:8319/api/categories', this.newCategory);
+        this.categories.push(response.data);
+        this.resetNewCategory();
+        this.closeModal();
+      } catch (error) {
+        console.error('Erreur lors de l\'ajout de la catégorie :', error);
+      }
+    },
+    resetNewCategory() {
+      this.newCategory = {
+        title: ''
       };
     },
-    computed: {
-      // FILTRAGE DES CATEGORIES CELON LES CONTENUE DU CHAMP DE RECHERCE
-      filteredCategories() {
-        return this.categories.filter(category =>
-            category.title.toLowerCase().includes(this.searchQuery.toLowerCase())
-        );
-      },
-      // CATEGORIES PAGINÉES SELON LA PAGE ACTUELLE
-      paginatedCategories() {
-        const start = (this.currentPage - 1) * this.itemsPerPage;
-        const end = start + this.itemsPerPage;
-        return this.filteredCategories.slice(start, end);
-      },
-      // CALCUL DU NOMBRE TOTAL DE PAGES
-      totalPages() {
-        return Math.ceil(this.filteredCategories.length / this.itemsPerPage);
-      }
+    closeModal() {
+      this.showModal = false;
     },
-    created() {
-      this.fetchCategories();  // Appeler la méthode afin de récupérer les éléments de l'entité Catégorie
+    // OUVERTURE DU MODAL D'ÉDITION
+    openEditModal(category) {
+      this.editCategoryData = { id: category.id, title: category.title, updated_at: new Date().toISOString() }; // Mettre à jour avec la date actuelle
+      this.showEditModal = true;
     },
-    methods: {
-      // RÉCUPÉRATION DES CATEGORIES
-      async fetchCategories() {
-        try {
-          const response = await axios.get('http://symfony.mmi-troyes.fr:8319/api/categories');
-          this.categories = response.data['hydra:member'];
-        } catch (error) {
-          this.error = 'Erreur lors de la récupération des catégories.';
-          console.error(error);
+    async editCategory() {
+      try {
+        if (!this.editCategoryData.title || this.editCategoryData.title.length < 3 || this.editCategoryData.title.length > 255) {
+          alert('Le titre doit contenir entre 3 et 255 caractères.');
+          return;
         }
-      },
-      async addCategory() {
-        try {
-          if (!this.newCategory.title || this.newCategory.title.length < 3 || this.newCategory.title.length > 255) {
-            alert('Le titre doit contenir entre 3 et 255 caractères.');
-            return;
-          }
 
-          const response = await axios.post('http://symfony.mmi-troyes.fr:8319/api/categories', this.newCategory);
-          this.categories.push(response.data);
-          this.resetNewCategory();
-          this.closeModal();
-        } catch (error) {
-          console.error('Erreur lors de l\'ajout de la catégorie :', error);
+        // Ajouter l'updated_at avec la date actuelle
+        this.editCategoryData.updated_at = new Date().toISOString(); // Mettre à jour la date
+
+        const response = await axios.put(`http://symfony.mmi-troyes.fr:8319/api/categories/${this.editCategoryData.id}`, this.editCategoryData);
+
+        // Mettre à jour la catégorie dans le tableau local
+        const index = this.categories.findIndex(category => category.id === this.editCategoryData.id);
+        if (index !== -1) {
+          this.$set(this.categories, index, response.data);
         }
-      },
-      resetNewCategory() {
-        this.newCategory = {
-          title: ''
-        };
-      },
-      closeModal() {
-        this.showModal = false;
-      },
-      // NAVIGUER À LA PAGE PRÉCÉDENTE
-      prevPage() {
-        if (this.currentPage > 1) {
-          this.currentPage--;
-        }
-      },
-      // NAVIGUER À LA PAGE SUIVANTE
-      nextPage() {
-        if (this.currentPage < this.totalPages) {
-          this.currentPage++;
-        }
-      },
-      // ALLER À UNE PAGE SPÉCIFIQUE EN APPUYANT SUR ENTER
-      goToPage() {
-        if (this.pageInput >= 1 && this.pageInput <= this.totalPages) {
-          this.currentPage = this.pageInput;
-          this.pageInput = '';
-        } else {
-          alert(`Veuillez entrer un numéro de page valide entre 1 et ${this.totalPages}`);
-        }
+
+        this.closeEditModal();
+      } catch (error) {
+        console.error('Erreur lors de l\'édition de la catégorie :', error);
       }
     },
-    watch: {
-      // RÉINITIALISER LA PAGE ACTUELLE LORSQUE LA RECHERCHE CHANGE
-      searchQuery() {
-        this.currentPage = 1; // Retour à la première page lors du changement de recherche
+    closeEditModal() {
+      this.showEditModal = false;
+    },
+    // NAVIGUER À LA PAGE PRÉCÉDENTE
+    prevPage() {
+      if (this.currentPage > 1) {
+        this.currentPage--;
+      }
+    },
+    // NAVIGUER À LA PAGE SUIVANTE
+    nextPage() {
+      if (this.currentPage < this.totalPages) {
+        this.currentPage++;
+      }
+    },
+    // ALLER À UNE PAGE SPÉCIFIQUE EN APPUYANT SUR ENTER
+    goToPage() {
+      if (this.pageInput >= 1 && this.pageInput <= this.totalPages) {
+        this.currentPage = this.pageInput;
+        this.pageInput = '';
+      } else {
+        alert(`Veuillez entrer un numéro de page valide entre 1 et ${this.totalPages}`);
       }
     }
-  };
+  },
+  watch: {
+    // RÉINITIALISER LA PAGE ACTUELLE LORSQUE LA RECHERCHE CHANGE
+    searchQuery() {
+      this.currentPage = 1; // Retour à la première page lors du changement de recherche
+    }
+  }
+};
 </script>
 
-
 <style scoped>
-  .categories-container {
-    padding: 20px;
-  }
+.categories-container {
+  padding: 20px;
+}
 
-  h1 {
-    margin-bottom: 20px;
-  }
+h1 {
+  margin-bottom: 20px;
+}
 
-  .search-container {
-    display: flex;
-    align-items: center;
-    margin-bottom: 20px;
-  }
+.search-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
 
-  .search-pagination {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-  }
+.search-bar {
+  width: 300px;
+  padding: 10px;
+  margin-right: 20px;
+}
 
-  .search-bar {
-    padding: 10px;
-    width: 100%;
-    max-width: 400px;
-    font-size: 16px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    margin-right: 10px;
-  }
+.pagination-controls {
+  display: flex;
+  align-items: center;
+}
 
-  .pagination-controls {
-    display: flex;
-    align-items: center;
-    margin-right: 10px;
-  }
+.pagination-controls button {
+  margin: 0 5px;
+}
 
-  .pagination-controls button {
-    background-color: #4caf50;
-    border: none;
-    color: white;
-    padding: 10px;
-    margin: 0 5px;
-    cursor: pointer;
-    border-radius: 4px;
-  }
+.page-input-container {
+  margin-left: 20px;
+}
 
-  .pagination-controls button:disabled {
-    background-color: #ccc;
-    cursor: not-allowed;
-  }
+.page-input {
+  width: 100px;
+  padding: 5px;
+}
 
-  ul,
-  .list-categories {
-    list-style-type: none;
-    padding: 0;
-  }
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 
-  li,
-  .category-item {
-    padding: 10px;
-    border-bottom: 1px solid #ccc;
-  }
+.modal-content {
+  background-color: white;
+  padding: 20px;
+  border-radius: 5px;
+  position: relative;
+  min-width: 300px;
+}
 
-  .page-input-container {
-    display: flex;
-    align-items: center;
-    margin-left: 10px;
-  }
+.close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  cursor: pointer;
+}
 
-  .page-input {
-    padding: 8px;
-    font-size: 14px;
-    width: 80px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    text-align: center;
-  }
+.category-input {
+  width: 100%;
+  padding: 10px;
+  margin: 10px 0;
+}
 
-  .page-input:focus {
-    outline: none;
-    border-color: #4caf50;
-  }
+.add-category-button {
+  background-color: #4CAF50;
+  color: white;
+  padding: 10px 15px;
+  border: none;
+  cursor: pointer;
+}
 
-  .page-input-container::before {
-    content: "Aller à la page :";
-    margin-right: 10px;
-    font-size: 14px;
-    color: #333;
-  }
+.add-category-button:hover {
+  background-color: #45a049;
+}
 
-  .add-category-button {
-    background-color: #4caf50;
-    border: none;
-    color: white;
-    padding: 10px;
-    cursor: pointer;
-    border-radius: 4px;
-    margin-top: 20px;
-  }
+.input-info {
+  font-size: 0.9em;
+  color: #777;
+}
 
-  .modal {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-  }
+.delete-category-button {
+  background-color: #f44336;
+  color: white;
+  padding: 5px 10px;
+  border: none;
+  cursor: pointer;
+  margin-left: 10px;
+}
 
-  .modal-content {
-    background-color: white;
-    padding: 20px;
-    border-radius: 8px;
-    width: 400px;
-  }
+.delete-category-button:hover {
+  background-color: #d32f2f;
+}
 
-  .close {
-    float: right;
-    font-size: 28px;
-    cursor: pointer;
-  }
+.confirm-delete-button {
+  background-color: #f44336;
+  color: white;
+  padding: 10px 15px;
+  border: none;
+  cursor: pointer;
+}
 
-  .category-input {
-    width: 100%;
-    padding: 10px;
-    margin-bottom: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-  }
+.confirm-delete-button:hover {
+  background-color: #d32f2f;
+}
 
-  .input-info {
-    font-size: 12px;
-    color: #666;
-  }
+.cancel-delete-button {
+  background-color: #bbb;
+  color: white;
+  padding: 10px 15px;
+  border: none;
+  cursor: pointer;
+}
+
+.cancel-delete-button:hover {
+  background-color: #999;
+}
+
 </style>
