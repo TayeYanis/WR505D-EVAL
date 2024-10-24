@@ -135,7 +135,23 @@ h2 {
 }
 
 .error-message {
-  color: red; /* Couleur pour le message d'erreur */
+  color: red;
   margin-top: 20px;
 }
+
+@media (max-width: 900px) {
+  .movies-list,
+  .actors-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+
+  .movie-card,
+  .actor-card{
+    padding: 5px;
+  }
+
+}
+
 </style>
