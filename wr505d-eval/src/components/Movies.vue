@@ -244,14 +244,22 @@
 
     methods: {
       async fetchMovies() {
+        const token = localStorage.getItem('jwt_token'); // Récupérer le token du localStorage
         try {
-          const response = await axios.get('http://symfony.mmi-troyes.fr:8319/api/movies');
-          this.movies = response.data['hydra:member'];
+          const response = await axios.get('http://symfony.mmi-troyes.fr:8319/api/movies', {
+            headers: {
+              'Authorization': `Bearer ${token}`, // Ajouter le token dans l'en-tête Authorization
+              'Content-Type': 'application/json',
+            },
+          });
+          console.log("Films récupérés:", response.data); // Debug: Afficher les films récupérés
+          this.movies = response.data['hydra:member']; // Assigner les films récupérés
         } catch (error) {
-          this.error = 'Erreur lors de la récupération des films.';
+          this.errorMessage = 'Erreur lors de la récupération des films.'; // Message d'erreur en cas d'échec
           console.error(error);
         }
       },
+
       validateRatingInput() {
         this.newMovie.rating = this.newMovie.rating.replace(/[^0-9,]/g, '');
       },
@@ -287,27 +295,43 @@
       },
       async fetchActors() {
         try {
-          const response = await axios.get('http://symfony.mmi-troyes.fr:8319/api/actors');
-          this.actors = response.data['hydra:member'];
+          const token = localStorage.getItem('jwt_token'); // Récupérer le token du localStorage
+          const response = await axios.get('http://symfony.mmi-troyes.fr:8319/api/actors', {
+            headers: {
+              'Authorization': `Bearer ${token}`, // Ajouter le token dans l'en-tête Authorization
+              'Content-Type': 'application/json',
+            },
+          });
+          this.actors = response.data['hydra:member']; // Stocker les acteurs récupérés
         } catch (error) {
           console.error('Erreur lors de la récupération des acteurs:', error);
+          this.errorMessage = 'Erreur lors de la récupération des acteurs. Vous devez être connecté pour voir cette section.';
         }
       },
       async fetchCategories() {
         try {
-          const response = await axios.get('http://symfony.mmi-troyes.fr:8319/api/categories');
-          this.categories = response.data['hydra:member'];
+          const token = localStorage.getItem('jwt_token'); // Récupérer le token du localStorage
+          const response = await axios.get('http://symfony.mmi-troyes.fr:8319/api/categories', {
+            headers: {
+              'Authorization': `Bearer ${token}`, // Ajouter le token dans l'en-tête Authorization
+              'Content-Type': 'application/json',
+            },
+          });
+          this.categories = response.data['hydra:member']; // Stocker les catégories
         } catch (error) {
           console.error('Erreur lors de la récupération des catégories:', error);
+          this.errorMessage = 'Erreur lors de la récupération des catégories. Vous devez être connecté pour voir cette section.';
         }
       },
       async addMovie() {
         try {
+          // Vérifications des champs obligatoires
           if (!this.newMovie.title || !this.newMovie.description || !this.newMovie.releaseDate || !this.newMovie.duration || !this.newMovie.entries || !this.newMovie.director || !this.newMovie.rating || !this.newMovie.media) {
             alert("Veuillez remplir tous les champs obligatoires.");
             return;
           }
 
+          // Vérifications spécifiques
           if (this.newMovie.duration < 50 || this.newMovie.duration > 200) {
             alert("La durée doit être comprise entre 50 et 200 minutes.");
             return;
@@ -324,6 +348,7 @@
             return;
           }
 
+          // Préparation des données pour l'envoi
           const actorIRIs = this.selectedActors.map(actorId => `/api/actors/${actorId}`);
           const categoryIRIs = this.selectedCategories.map(categoryId => `/api/categories/${categoryId}`);
 
@@ -340,13 +365,24 @@
             categories: categoryIRIs,
           };
 
-          const response = await axios.post('http://symfony.mmi-troyes.fr:8319/api/movies', newMovieData);
+          // Récupérer le token du localStorage
+          const token = localStorage.getItem('jwt_token');
+
+          // Envoi des données avec axios
+          const response = await axios.post('http://symfony.mmi-troyes.fr:8319/api/movies', newMovieData, {
+            headers: {
+              'Authorization': `Bearer ${token}`, // Ajouter le token dans l'en-tête Authorization
+              'Content-Type': 'application/json',
+            },
+          });
+
+          // Ajouter le film à la liste des films et réinitialiser le formulaire
           this.movies.push(response.data);
           this.resetNewMovie();
-          this.closeModal();
+          this.closeModal(); // Si vous avez une méthode pour fermer un modal
         } catch (error) {
           this.error = 'Erreur lors de l\'ajout du film.';
-          console.error(error.response.data);
+          console.error(error.response.data); // Afficher les détails de l'erreur dans la console
         }
       },
       resetNewMovie() {
