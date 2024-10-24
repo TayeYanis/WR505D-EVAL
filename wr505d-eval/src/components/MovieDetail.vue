@@ -3,7 +3,22 @@
     <h1>
       Détails du film
       <button @click="showEditModal = true" class="edit-movie-button">Éditer</button>
+      <button @click="showDeleteModal = true" class="delete-movie-button">Supprimer</button>
     </h1>
+
+    <!-- Modal de confirmation de suppression -->
+    <div v-if="showDeleteModal" class="modal">
+      <div class="modal-content">
+        <span class="close" @click="closeDeleteModal">&times;</span>
+        <h2>Confirmation de suppression</h2>
+        <p>Voulez-vous vraiment supprimer l'entité Movies avec l'ID {{ movie.id }} ?</p>
+        <div class="modal-buttons">
+          <button @click="deleteMovie" class="confirm-delete-button">Oui</button>
+          <button @click="closeDeleteModal" class="cancel-button">Non</button>
+        </div>
+      </div>
+    </div>
+
 
     <!-- Modal d'édition -->
     <div v-if="showEditModal" class="modal">
@@ -626,4 +641,40 @@ strong {
   width: 100%;
   margin-top: 20px;
 }
+
+.delete-movie-button {
+  background-color: #f44336;
+  color: white;
+  padding: 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-left: 10px;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.confirm-delete-button {
+  background-color: #f44336;
+  color: white;
+  padding: 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.cancel-button {
+  background-color: #ccc;
+  color: black;
+  padding: 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+
 </style>
