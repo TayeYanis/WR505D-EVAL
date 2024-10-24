@@ -24,7 +24,7 @@
           <p class="donnee">Prénom :</p>
           <input
               type="text"
-              v-model="editActorData.firstname || ''"
+              v-model="editActorData.firstname"
               placeholder="Prénom"
               required
               class="actor-input"
@@ -32,7 +32,7 @@
           <p class="donnee">Nom :</p>
           <input
               type="text"
-              v-model="editActorData.lastname || ''"
+              v-model="editActorData.lastname"
               placeholder="Nom"
               required
               class="actor-input"
@@ -40,7 +40,7 @@
           <p class="donnee">Nationalité :</p>
           <input
               type="text"
-              v-model="editActorData.nationality || ''"
+              v-model="editActorData.nationality"
               placeholder="Nationalité"
               required
               class="actor-input"
@@ -63,7 +63,7 @@
           />
           <p class="donnee">Biographie :</p>
           <textarea
-              v-model="editActorData.bio || ''"
+              v-model="editActorData.bio"
               placeholder="Biographie"
               required
               class="actor-textarea"
@@ -78,7 +78,7 @@
           <p class="donnee">Image de profil :</p>
           <input
               type="text"
-              v-model="editActorData.media || ''"
+              v-model="editActorData.media"
               placeholder="URL de l'image"
               required
               class="actor-input"
@@ -183,19 +183,37 @@ export default {
   },
   methods: {
     async fetchMovies() {
+      const token = localStorage.getItem('jwt_token'); // Récupérer le token du localStorage
       try {
-        const response = await axios.get('http://symfony.mmi-troyes.fr:8319/api/movies');
+        // Requête GET avec Axios pour récupérer les films
+        const response = await axios.get('http://symfony.mmi-troyes.fr:8319/api/movies', {
+          headers: {
+            'Authorization': `Bearer ${token}`, // Ajouter le token dans l'en-tête Authorization
+            'Content-Type': 'application/json',
+          },
+        });
+
+        // Stocker la réponse des films dans l'état `movies`
         this.movies = response.data['hydra:member'];
-        this.updateSelectedMovies();
-        console.log(this.movies);
+
+        // Log pour le débogage
+        console.log('Films récupérés :', this.movies);
       } catch (error) {
+        // Gérer les erreurs et afficher un message d'erreur
         console.error('Erreur lors de la récupération des films', error);
+        this.errorMessage = 'Erreur lors de la récupération des films. Veuillez vérifier votre connexion ou connexion utilisateur.';
       }
     },
     async deleteActor() {
-      const actorId = this.$route.params.id;
+      const actorId = this.$route.params.id; // Récupérer l'ID de l'acteur à partir de l'URL
+      const token = localStorage.getItem('jwt_token'); // Récupérer le token du localStorage
       try {
-        await axios.delete(`http://symfony.mmi-troyes.fr:8319/api/actors/${actorId}`);
+        await axios.delete(`http://symfony.mmi-troyes.fr:8319/api/actors/${actorId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`, // Ajouter le token dans l'en-tête Authorization
+            'Content-Type': 'application/json',
+          },
+        });
         this.$router.push('/actors'); // Redirection vers la liste d'acteurs après suppression
       } catch (error) {
         console.error('Erreur lors de la suppression de l\'acteur', error);
@@ -218,9 +236,16 @@ export default {
       return d.toISOString().split('T')[0];
     },
     async fetchActorDetails() {
-      const actorId = this.$route.params.id;
+      const actorId = this.$route.params.id; // Récupérer l'ID de l'acteur à partir des paramètres de l'URL
+      const token = localStorage.getItem('jwt_token'); // Récupérer le token du localStorage
+
       try {
-        const response = await axios.get(`http://symfony.mmi-troyes.fr:8319/api/actors/${actorId}`);
+        const response = await axios.get(`http://symfony.mmi-troyes.fr:8319/api/actors/${actorId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`, // Ajouter le token dans l'en-tête Authorization
+            'Content-Type': 'application/json',
+          },
+        });
         this.actor = response.data;
 
         //const actorMovieIds = response.data.movies.map(movie => movie.id);
@@ -251,7 +276,14 @@ export default {
     async fetchMoviesForActor(movieUrls) {
       try {
         this.actorMovies = await Promise.all(
-            movieUrls.map(url => axios.get(`http://symfony.mmi-troyes.fr:8319${url}`).then(res => res.data))
+            movieUrls.map(url =>
+                axios.get(`http://symfony.mmi-troyes.fr:8319${url}`, {
+                  headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('jwt_token')}`, // Ajouter le token dans l'en-tête Authorization
+                    'Content-Type': 'application/json',
+                  },
+                }).then(res => res.data)
+            )
         );
       } catch (error) {
         this.error = 'Erreur lors de la récupération des films de l\'acteur.';
@@ -264,23 +296,39 @@ export default {
       return new Date(date).toLocaleDateString('fr-FR', options);
     },
     async editActor() {
-      const actorId = this.$route.params.id;
+      const actorId = this.$route.params.id; // Récupérer l'ID de l'acteur à partir des paramètres de la route
       const editActorData = {
         ...this.editActorData,
-       // movies: this.editActorData.movies.map(movieId => `/api/movies/${movieId}`),
-        awards: Number(this.editActorData.awards)
+        awards: Number(this.editActorData.awards), // Convertir les récompenses en nombre
       };
+
+      // Vérification des champs obligatoires
       if (!this.editActorData.firstname || !this.editActorData.lastname || !this.editActorData.nationality || !this.editActorData.dob) {
         this.error = 'Veuillez remplir tous les champs obligatoires.';
         return;
       }
+
+      const token = localStorage.getItem('jwt_token'); // Récupérer le token JWT du localStorage
+
       try {
-        await axios.put(`http://symfony.mmi-troyes.fr:8319/api/actors/${actorId}`, editActorData);
-        this.showEditModal = false;
-        this.fetchActorDetails();
+        const response = await fetch(`http://symfony.mmi-troyes.fr:8319/api/actors/${actorId}`, {
+          method: 'PATCH',
+          headers: {
+            'Authorization': `Bearer ${token}`, // Ajouter le token dans l'en-tête Authorization
+            'Content-Type': 'application/merge-patch+json', // Utiliser le bon MIME type pour PATCH
+          },
+          body: JSON.stringify(editActorData), // Convertir les données à envoyer en JSON
+        });
+
+        if (!response.ok) {
+          throw new Error('Erreur lors de la mise à jour de l\'acteur.'); // Si la réponse n'est pas "ok", lever une erreur
+        }
+
+        this.showEditModal = false; // Fermer la modal après la mise à jour
+        this.fetchActorDetails(); // Rafraîchir les informations de l'acteur après la mise à jour
       } catch (error) {
-        console.error('Erreur lors de l\'édition de l\'acteur', error);
-        this.error = 'Erreur lors de l\'édition de l\'acteur. Vérifiez les données saisies.';
+        console.error('Erreur lors de la mise à jour de l\'acteur', error);
+        this.error = 'Erreur lors de la mise à jour de l\'acteur. Vérifiez les données saisies.'; // Afficher un message d'erreur
       }
     },
     closeEditModal() {

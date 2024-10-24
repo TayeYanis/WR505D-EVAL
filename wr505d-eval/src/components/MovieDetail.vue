@@ -243,20 +243,40 @@ export default {
 
     async fetchActors() {
       try {
-        const response = await axios.get('http://symfony.mmi-troyes.fr:8319/api/actors');
+        const token = localStorage.getItem('jwt_token'); // Récupérer le token du localStorage
+        const response = await axios.get('http://symfony.mmi-troyes.fr:8319/api/actors', {
+          headers: {
+            'Authorization': `Bearer ${token}`, // Ajouter le token dans l'en-tête Authorization
+            'Content-Type': 'application/json',
+          },
+        });
         this.acteurs = response.data['hydra:member']; // Stocker tous les acteurs
       } catch (error) {
-        this.error = 'Erreur lors de la récupération des acteurs.';
-        console.error(error);
+        this.error = 'Erreur lors de la récupération des acteurs.'; // Message d'erreur
+        console.error(error); // Afficher l'erreur dans la console
       }
     },
     async deleteMovie() {
-      const movieId = this.$route.params.id;
+      const movieId = this.$route.params.id; // Récupérer l'ID du film depuis les paramètres de la route
+      const token = localStorage.getItem('jwt_token'); // Récupérer le token du localStorage
+
+      // Utilisation de fetch pour supprimer le film
       try {
-        await axios.delete(`http://symfony.mmi-troyes.fr:8319/api/movies/${movieId}`);
+        const response = await fetch(`http://symfony.mmi-troyes.fr:8319/api/movies/${movieId}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`, // Ajouter le token dans l'en-tête Authorization
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Erreur lors de la suppression du film');
+        }
+
         this.$router.push('/movies'); // Rediriger après suppression
       } catch (error) {
-        this.error = 'Erreur lors de la suppression du film.';
+        this.errorMessage = 'Erreur lors de la suppression du film.'; // Message d'erreur
         console.error(error);
       }
     },
@@ -266,12 +286,26 @@ export default {
     },
 
     async fetchCategories() {
+      const token = localStorage.getItem('jwt_token'); // Récupérer le token du localStorage
       try {
-        const response = await axios.get('http://symfony.mmi-troyes.fr:8319/api/categories');
-        this.categories = response.data['hydra:member']; // Stocker toutes les catégories
+        const response = await fetch("http://symfony.mmi-troyes.fr:8319/api/categories", {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`, // Ajouter le token dans l'en-tête Authorization
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Erreur lors de la récupération des catégories');
+        }
+
+        const data = await response.json();
+        console.log("Catégories récupérées:", data); // Debug: Afficher les catégories récupérées
+        this.categories = data['hydra:member']; // Stocker toutes les catégories
       } catch (error) {
-        this.error = 'Erreur lors de la récupération des catégories.';
         console.error(error);
+        this.errorMessage = 'Erreur lors de la récupération des catégories.'; // Message d'erreur
       }
     },
 
@@ -280,34 +314,48 @@ export default {
     },
 
     async fetchMovieDetails() {
-      const movieId = this.$route.params.id;
+      const movieId = this.$route.params.id; // Récupération de l'ID du film depuis les paramètres de la route
+      const token = localStorage.getItem('jwt_token'); // Récupérer le token du localStorage
+
       try {
-        const response = await axios.get(`http://symfony.mmi-troyes.fr:8319/api/movies/${movieId}`);
-        this.movie = response.data;
+        const response = await fetch(`http://symfony.mmi-troyes.fr:8319/api/movies/${movieId}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`, // Ajouter le token dans l'en-tête Authorization
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Erreur lors de la récupération des détails du film.');
+        }
+
+        const data = await response.json(); // Conversion de la réponse en JSON
+        this.movie = data; // Stockage des détails du film
 
         // Initialiser les données pour l'édition avec la bonne structure
         this.editMovieData = {
-          title: response.data.title,
-          description: response.data.description,
-          releaseDate: this.formatDateForInput(response.data.releaseDate),
-          duration: response.data.duration,
-          entries: response.data.entries,
-          director: response.data.director,
-          rating: response.data.rating,
-          media: response.data.media,
-          acteurs: response.data.acteurs || response.data.actors || [], // Assurer que seul le champ 'acteurs' ou 'actors' est utilisé
-          categories: response.data.categories, // Même chose pour les catégories
+          title: data.title,
+          description: data.description,
+          releaseDate: this.formatDateForInput(data.releaseDate),
+          duration: data.duration,
+          entries: data.entries,
+          director: data.director,
+          rating: data.rating,
+          media: data.media,
+          acteurs: data.acteurs || data.actors || [], // Assurer que seul le champ 'acteurs' ou 'actors' est utilisé
+          categories: data.categories, // Même chose pour les catégories
         };
 
         // Récupérer les acteurs du film (pour mise à jour affichage)
-        if (response.data.actors) {
-          await this.fetchActorsForMovie(response.data.actors);
+        if (data.actors) {
+          await this.fetchActorsForMovie(data.actors);
         }
 
         // Récupérer les catégories du film (pour mise à jour affichage)
-        if (response.data.categories) {
+        if (data.categories) {
           this.movieCategory = await Promise.all(
-              response.data.categories.map(url => this.fetchCategoryForMovie(url))
+              data.categories.map(url => this.fetchCategoryForMovie(url))
           );
         }
 
@@ -322,10 +370,27 @@ export default {
 
     async fetchActorsForMovie(actorUrls) {
       try {
+        const token = localStorage.getItem('jwt_token'); // Récupérer le token du localStorage
+
         const actors = await Promise.all(
-            actorUrls.map(url => axios.get(`http://symfony.mmi-troyes.fr:8319${url}`).then(res => res.data))
+            actorUrls.map(async (url) => {
+              const response = await fetch(`http://symfony.mmi-troyes.fr:8319${url}`, {
+                method: 'GET',
+                headers: {
+                  'Authorization': `Bearer ${token}`, // Ajouter le token dans l'en-tête Authorization
+                  'Content-Type': 'application/json',
+                },
+              });
+
+              if (!response.ok) {
+                throw new Error(`Erreur lors de la récupération de l'acteur à l'URL: ${url}`);
+              }
+
+              return response.json(); // Retourner les données JSON de l'acteur
+            })
         );
-        this.movieActors = actors;
+
+        this.movieActors = actors; // Stocker les acteurs récupérés dans movieActors
       } catch (error) {
         this.error = 'Erreur lors de la récupération des acteurs du film.';
         console.error(error);
@@ -334,16 +399,24 @@ export default {
 
     async fetchCategoryForMovie(categoryUrl) {
       try {
-        const response = await axios.get(`http://symfony.mmi-troyes.fr:8319${categoryUrl}`);
-        return response.data;
+        const token = localStorage.getItem('jwt_token'); // Récupérer le token du localStorage
+        const response = await axios.get(`http://symfony.mmi-troyes.fr:8319${categoryUrl}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`, // Ajouter le token dans l'en-tête Authorization
+            'Content-Type': 'application/json',
+          },
+        });
+        return response.data; // Retourner les données de la catégorie
       } catch (error) {
         this.error = 'Erreur lors de la récupération de la catégorie du film.';
         console.error(error);
       }
     },
 
+
+
     async editMovie() {
-      const movieId = this.$route.params.id;
+      const movieId = this.$route.params.id; // Récupérer l'ID du film depuis les paramètres de la route
       try {
         const rating = parseFloat(String(this.editMovieData.rating).replace(',', '.'));
 
@@ -363,12 +436,28 @@ export default {
           media: this.editMovieData.media,
           acteurs: this.editMovieData.acteurs.map(actorId => `${actorId}`), // Assurez-vous que ceci est correct
           categories: this.editMovieData.categories.map(categoryId => `${categoryId}`), // Assurez-vous que ceci est correct
-          // Note: Ne pas inclure `createdAt` ici
         };
 
-        await axios.put(`http://symfony.mmi-troyes.fr:8319/api/movies/${movieId}`, updatedMovieData);
-        this.showEditModal = false;
-        this.fetchMovieDetails(); // Recharger les détails après modification
+        const token = localStorage.getItem('jwt_token'); // Récupérer le token du localStorage
+
+        const response = await fetch(`http://symfony.mmi-troyes.fr:8319/api/movies/${movieId}`, {
+          method: 'PATCH',
+          headers: {
+            'Authorization': `Bearer ${token}`, // Ajouter le token dans l'en-tête Authorization
+            'Content-Type': 'application/merge-patch+json', // Remplacer par le bon Content-Type
+          },
+          body: JSON.stringify(updatedMovieData), // Convertir les données mises à jour en JSON
+        });
+
+        if (!response.ok) {
+          throw new Error('Erreur lors de la mise à jour du film');
+        }
+
+        // Rafraîchir les détails du film après la mise à jour
+        await this.fetchMovieDetails();
+
+        // Fermer la modale après la réussite de la mise à jour
+        this.closeEditModal();
 
       } catch (error) {
         this.error = 'Erreur lors de la modification du film.';

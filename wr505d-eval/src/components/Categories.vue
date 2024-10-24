@@ -153,11 +153,24 @@ export default {
   methods: {
     // RÉCUPÉRATION DES CATEGORIES
     async fetchCategories() {
+      const token = localStorage.getItem('jwt_token'); // Récupérer le token du localStorage
       try {
-        const response = await axios.get('http://symfony.mmi-troyes.fr:8319/api/categories');
-        this.categories = response.data['hydra:member'];
+        const response = await fetch("http://symfony.mmi-troyes.fr:8319/api/categories", {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`, // Ajouter le token dans l'en-tête Authorization
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Erreur lors de la récupération des catégories');
+        }
+
+        const data = await response.json();
+        this.categories = data['hydra:member']; // Stocker les catégories récupérées
       } catch (error) {
-        this.error = 'Erreur lors de la récupération des catégories.';
+        this.errorMessage = 'Erreur lors de la récupération des catégories.';
         console.error(error);
       }
     },
@@ -174,10 +187,23 @@ export default {
     },
     // Supprimer la catégorie
     async deleteCategory() {
+      const token = localStorage.getItem('jwt_token'); // Récupérer le token du localStorage
       try {
-        await axios.delete(`http://symfony.mmi-troyes.fr:8319/api/categories/${this.categoryToDelete}`);
+        const response = await fetch(`http://symfony.mmi-troyes.fr:8319/api/categories/${this.categoryToDelete}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`, // Ajouter le token dans l'en-tête Authorization
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Erreur lors de la suppression de la catégorie');
+        }
+
+        // Met à jour la liste des catégories après la suppression
         this.categories = this.categories.filter(category => category.id !== this.categoryToDelete);
-        this.closeDeleteModal();
+        this.closeDeleteModal(); // Ferme la modal de suppression
       } catch (error) {
         console.error('Erreur lors de la suppression de la catégorie :', error);
       }
@@ -185,15 +211,30 @@ export default {
 
     async addCategory() {
       try {
+        // Vérification des conditions du titre de la catégorie
         if (!this.newCategory.title || this.newCategory.title.length < 3 || this.newCategory.title.length > 255) {
           alert('Le titre doit contenir entre 3 et 255 caractères.');
           return;
         }
 
-        const response = await axios.post('http://symfony.mmi-troyes.fr:8319/api/categories', this.newCategory);
-        this.categories.push(response.data);
-        this.resetNewCategory();
-        this.closeModal();
+        const token = localStorage.getItem('jwt_token'); // Récupérer le token du localStorage
+        const response = await fetch('http://symfony.mmi-troyes.fr:8319/api/categories', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`, // Ajouter le token dans l'en-tête Authorization
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(this.newCategory) // Envoyer les données de la nouvelle catégorie
+        });
+
+        if (!response.ok) {
+          throw new Error('Erreur lors de l\'ajout de la catégorie');
+        }
+
+        const data = await response.json(); // Récupérer les données de la réponse
+        this.categories.push(data); // Ajouter la nouvelle catégorie à la liste
+        this.resetNewCategory(); // Réinitialiser le formulaire de nouvelle catégorie
+        this.closeModal(); // Fermer la modal si nécessaire
       } catch (error) {
         console.error('Erreur lors de l\'ajout de la catégorie :', error);
       }
@@ -213,6 +254,7 @@ export default {
     },
     async editCategory() {
       try {
+        // Validation du titre de la catégorie
         if (!this.editCategoryData.title || this.editCategoryData.title.length < 3 || this.editCategoryData.title.length > 255) {
           alert('Le titre doit contenir entre 3 et 255 caractères.');
           return;
@@ -221,19 +263,36 @@ export default {
         // Ajouter l'updated_at avec la date actuelle
         this.editCategoryData.updated_at = new Date().toISOString(); // Mettre à jour la date
 
-        const response = await axios.put(`http://symfony.mmi-troyes.fr:8319/api/categories/${this.editCategoryData.id}`, this.editCategoryData);
+        const token = localStorage.getItem('jwt_token'); // Récupérer le token du localStorage
+        const response = await fetch(`http://symfony.mmi-troyes.fr:8319/api/categories/${this.editCategoryData.id}`, {
+          method: 'PUT', // Méthode pour mettre à jour la catégorie
+          headers: {
+            'Authorization': `Bearer ${token}`, // Ajouter le token dans l'en-tête Authorization
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(this.editCategoryData), // Données à envoyer
+        });
+
+        // Vérification de la réponse
+        if (!response.ok) {
+          throw new Error('Erreur lors de l\'édition de la catégorie'); // Gestion d'erreur si la réponse n'est pas ok
+        }
+
+        const data = await response.json(); // Conversion de la réponse en JSON
 
         // Mettre à jour la catégorie dans le tableau local
         const index = this.categories.findIndex(category => category.id === this.editCategoryData.id);
         if (index !== -1) {
-          this.$set(this.categories, index, response.data);
+          this.$set(this.categories, index, data); // Mise à jour de la catégorie
         }
 
-        this.closeEditModal();
+        this.closeEditModal(); // Fermer la modal d'édition
       } catch (error) {
-        console.error('Erreur lors de l\'édition de la catégorie :', error);
+        console.error('Erreur lors de l\'édition de la catégorie :', error); // Affichage de l'erreur
+        alert('Une erreur s\'est produite lors de la mise à jour de la catégorie.'); // Alerte à l'utilisateur
       }
     },
+
     closeEditModal() {
       this.showEditModal = false;
     },

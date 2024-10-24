@@ -1,117 +1,141 @@
 <template>
-    <div class="homepage-container">
-      <h1>Homepage</h1>
-      <p>Page d'accueil.</p>
-
-      <!-- SECTION DES FILMS !-->
-      <section class="movies-section">
-        <h2>Derniers Films</h2>
-        <div class="movies-list">
-          <MovieCard
-              v-for="movie in lastMovies"
-              :key="movie.id"
-              :movie="movie"
-          />
-        </div>
-      </section>
-
-      <!-- SECTION DES ACTEURS !-->
-      <section class="actors-section">
-        <h2>Derniers Acteurs</h2>
-        <div class="actors-list">
-          <ActorCard
-              v-for="actor in lastActors"
-              :key="actor.id"
-              :actor="actor"
-          />
-        </div>
-      </section>
-    </div>
+  <div class="homepage-container">
+    <h1>Bienvenue sur la page d'accueil de notre site !</h1>
+    <section class="movies-section">
+      <h2>Retrouvez les 4 dernières sorties :</h2>
+      <div class="movies-list">
+        <MovieCard
+            v-for="movie in latestMovies"
+            :key="movie.id"
+            :movie="movie"
+        />
+      </div>
+      <div v-if="errorMessage" class="error-message">{{ errorMessage }}</div>
+    </section>
+    <section class="actors-section">
+      <h2>Découvrez nos 4 meilleurs acteurs :</h2>
+      <div class="actors-list">
+        <ActorCard v-for="actor in bestActors" :key="actor.id" :actor="actor" />
+      </div>
+      <div v-if="errorMessage" class="error-message">{{ errorMessage }}</div>
+    </section>
+  </div>
 </template>
 
 <script>
-  import axios from 'axios';
-  import MovieCard from '@/components/MovieCard.vue';
-  import ActorCard from '@/components/ActorCard.vue';
+import MovieCard from "../components/MovieCard.vue";
+import ActorCard from "../components/ActorCard.vue";
 
-  export default {
-    name: 'Homepage',
-    components: {
-      MovieCard,
-      ActorCard,
+export default {
+  name: "Homepage",
+  components: {
+    MovieCard,
+    ActorCard,
+  },
+  data() {
+    return {
+      latestMovies: [],
+      bestActors: [],
+      errorMessage: null, // Pour afficher les messages d'erreur
+    };
+  },
+  created() {
+    this.fetchLatestMovies();
+    this.fetchBestActors();
+  },
+  methods: {
+    // Récupérer les films les plus récents
+    fetchLatestMovies() {
+      const token = localStorage.getItem('jwt_token'); // Récupérer le token du localStorage
+      fetch("http://symfony.mmi-troyes.fr:8319/api/movies", {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`, // Ajouter le token dans l'en-tête Authorization
+          'Content-Type': 'application/json',
+        },
+      })
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error('Erreur lors de la récupération des films');
+            }
+            return response.json();
+          })
+          .then((data) => {
+            console.log("Films récupérés:", data); // Debug: Afficher les films récupérés
+            if (data["hydra:member"]) {
+              this.latestMovies = data["hydra:member"]
+                  .sort((a, b) => new Date(b.releaseDate) - new Date(a.releaseDate))
+                  .slice(0, 4);
+            } else {
+              console.warn("Aucun film trouvé dans la réponse"); // Debug: Avertissement si pas de films
+            }
+          })
+          .catch((error) => {
+            console.error(error);
+            this.errorMessage = 'Erreur lors de la récupération des films. Vous devez être connecté pour voir cette section.';
+          });
     },
-    data() {
-      return {
-        lastMovies: [],   // STOCKAGE DES 4 DERNIERS FILMS
-        lastActors: [],   // STOCKAGE DES 4 DERNIERS ACTEURS
-        error: null,      // gestion en cas d'erreur
-      };
+    // Récupérer les meilleurs acteurs
+    fetchBestActors() {
+      const token = localStorage.getItem('jwt_token'); // Récupérer le token du localStorage
+      fetch("http://symfony.mmi-troyes.fr:8319/api/actors", {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`, // Ajouter le token dans l'en-tête Authorization
+          'Content-Type': 'application/json',
+        },
+      })
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error('Erreur lors de la récupération des acteurs');
+            }
+            return response.json();
+          })
+          .then((data) => {
+            console.log("Acteurs récupérés:", data); // Debug: Afficher les acteurs récupérés
+            if (data["hydra:member"]) {
+              this.bestActors = data["hydra:member"].slice(0, 4);
+            } else {
+              console.warn("Aucun acteur trouvé dans la réponse"); // Debug: Avertissement si pas d'acteurs
+            }
+          })
+          .catch((error) => {
+            console.error(error);
+            this.errorMessage = 'Erreur lors de la récupération des acteurs. Vous devez être connecté pour voir cette section.';
+          });
     },
-    created() {
-      this.fetchLastMovies();   // utilisation d'un get pour recupérer les 4 derniers movies
-      this.fetchLastActors();   // utilisation d'un get pour recupérer les 4 derniers acteurs
-    },
-    methods: {
-      async fetchLastMovies() {
-        try {
-          const response = await axios.get('http://symfony.mmi-troyes.fr:8319/api/movies');
-
-          // Utilisation d'une méthode de trie pour recupérer les derniers films par date de sorte et de prendre les 4 derniers
-          this.lastMovies = response.data['hydra:member']
-              .sort((a, b) => new Date(b.releaseDate) - new Date(a.releaseDate))
-              .slice(0, 4);
-
-        } catch (error) {
-          this.error = 'Erreur lors de la récupération des films.';
-          console.error(error);
-        }
-      },
-      async fetchLastActors() {
-        let allActors = [];
-        try {
-          const responsePage1 = await axios.get('http://symfony.mmi-troyes.fr:8319/api/actors?page=1&itemsPerPage=50');
-          const actorsPage1 = responsePage1.data['hydra:member'];
-
-          const responsePage2 = await axios.get('http://symfony.mmi-troyes.fr:8319/api/actors?page=2&itemsPerPage=50');
-          const actorsPage2 = responsePage2.data['hydra:member'];
-
-          allActors = actorsPage1.concat(actorsPage2);
-
-          // Utilisation d'une méthode de trie pour recupérer les derniers acteurs par id de prendre les 4 derniers
-          this.lastActors = allActors.sort((a, b) => b.id - a.id).slice(0, 4);
-
-        } catch (error) {
-          this.error = 'Erreur lors de la récupération des acteurs.';
-          console.error(error);
-        }
-      }
-    },
-  };
+  },
+};
 </script>
 
 <style scoped>
-  .homepage-container {
-    padding: 20px;
-  }
+.homepage-container {
+  padding: 20px;
+}
 
-  h1 {
-    margin-bottom: 20px;
-  }
+h1 {
+  margin-bottom: 20px;
+}
 
-  .movies-section,
-  .actors-section {
-    margin-bottom: 40px;
-  }
+.movies-section,
+.actors-section {
+  margin-bottom: 40px;
+}
 
-  .movies-list,
-  .actors-list {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 20px;
-  }
+.movies-list,
+.actors-list {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
 
-  h2 {
-    margin-bottom: 15px;
-    font-size: 24px;
-  }
+h2 {
+  margin-bottom: 15px;
+  font-size: 24px;
+}
+
+.error-message {
+  color: red; /* Couleur pour le message d'erreur */
+  margin-top: 20px;
+}
 </style>

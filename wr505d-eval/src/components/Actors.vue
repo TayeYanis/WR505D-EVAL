@@ -212,16 +212,33 @@
       async fetchActors() {
         let allActors = [];
         try {
-          const responsePage1 = await axios.get('http://symfony.mmi-troyes.fr:8319/api/actors?page=1&itemsPerPage=50');
+          const token = localStorage.getItem('jwt_token'); // Récupérer le token du localStorage
+
+          // Récupérer la première page d'acteurs
+          const responsePage1 = await axios.get('http://symfony.mmi-troyes.fr:8319/api/actors?page=1&itemsPerPage=50', {
+            headers: {
+              'Authorization': `Bearer ${token}`, // Ajouter le token dans l'en-tête Authorization
+              'Content-Type': 'application/json',
+            },
+          });
+
           const actorsPage1 = responsePage1.data['hydra:member'];
 
-          const responsePage2 = await axios.get('http://symfony.mmi-troyes.fr:8319/api/actors?page=2&itemsPerPage=50');
+          // Récupérer la deuxième page d'acteurs
+          const responsePage2 = await axios.get('http://symfony.mmi-troyes.fr:8319/api/actors?page=2&itemsPerPage=50', {
+            headers: {
+              'Authorization': `Bearer ${token}`, // Ajouter le token dans l'en-tête Authorization
+              'Content-Type': 'application/json',
+            },
+          });
+
           const actorsPage2 = responsePage2.data['hydra:member'];
 
+          // Combiner les deux pages d'acteurs
           allActors = actorsPage1.concat(actorsPage2);
           this.actors = allActors;
         } catch (error) {
-          this.error = 'Erreur lors de la récupération des acteurs.';
+          this.errorMessage = 'Erreur lors de la récupération des acteurs.';
           console.error(error);
         }
       },
@@ -231,19 +248,33 @@
         let page = 1;
         let totalMovies = 0;
 
+        const token = localStorage.getItem('jwt_token'); // Récupérer le token du localStorage
+
         do {
-          const response = await axios.get(`http://symfony.mmi-troyes.fr:8319/api/movies?page=${page}`);
-          allMovies.push(...response.data['hydra:member']);
-          totalMovies = response.data['hydra:totalItems'];
-          page++;
+          try {
+            const response = await axios.get(`http://symfony.mmi-troyes.fr:8319/api/movies?page=${page}`, {
+              headers: {
+                'Authorization': `Bearer ${token}`, // Ajouter le token dans l'en-tête Authorization
+                'Content-Type': 'application/json',
+              },
+            });
+
+            allMovies.push(...response.data['hydra:member']);
+            totalMovies = response.data['hydra:totalItems'];
+            page++;
+          } catch (error) {
+            console.error(error);
+            this.errorMessage = 'Erreur lors de la récupération des films. Vous devez être connecté pour voir cette section.';
+            break; // Sortir de la boucle en cas d'erreur
+          }
         } while (allMovies.length < totalMovies);
 
-        this.movies = allMovies;
+        this.movies = allMovies; // Mettre à jour la liste des films
       },
 
       async addActor() {
         try {
-
+          // Vérification des champs requis
           if (!this.newActor.firstname || !this.newActor.lastname || !this.newActor.dob || !this.newActor.bio || !this.newActor.nationality || !this.newActor.media || !this.newActor.gender) {
             alert("Veuillez remplir tous les champs obligatoires.");
             return;
@@ -254,8 +285,9 @@
             return;
           }
 
-          this.newActor.awards = this.newActor.awards === '' ? null : parseInt(this.newActor.awards, 12);
+          this.newActor.awards = this.newActor.awards === '' ? null : parseInt(this.newActor.awards, 10);
 
+          // Création des données pour le nouvel acteur
           const newActorData = {
             firstname: this.newActor.firstname,
             lastname: this.newActor.lastname,
@@ -269,13 +301,28 @@
             movies: this.selectedMovies.map(movieId => `/api/movies/${movieId}`),
           };
 
-          const response = await axios.post('http://symfony.mmi-troyes.fr:8319/api/actors', newActorData);
-          this.actors.push(response.data);
-          this.resetNewActor();
-          this.closeModal();
+          const token = localStorage.getItem('jwt_token'); // Récupérer le token du localStorage
+
+          const response = await fetch('http://symfony.mmi-troyes.fr:8319/api/actors', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`, // Ajouter le token dans l'en-tête Authorization
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(newActorData), // Convertir les données en JSON
+          });
+
+          if (!response.ok) {
+            throw new Error('Erreur lors de l\'ajout de l\'acteur');
+          }
+
+          const data = await response.json(); // Récupérer les données de la réponse
+          this.actors.push(data); // Ajouter l'acteur à la liste
+          this.resetNewActor(); // Réinitialiser le formulaire
+          this.closeModal(); // Fermer la fenêtre modale
         } catch (error) {
           this.error = 'Erreur lors de l\'ajout de l\'acteur.';
-          console.error(error.response.data);
+          console.error(error);
         }
       },
 
