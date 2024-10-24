@@ -151,4 +151,24 @@
   .popup-logout {
     color: red;
   }
+
+
+  @media (max-width: 900px) {
+    .login-form {
+      width: 90%;
+      padding: 15px;
+    }
+
+    h2 {
+      font-size: 1.5em;
+    }
+
+    button {
+      padding: 12px;
+    }
+
+    .popup-success, .popup-logout {
+      font-size: 0.9em;
+    }
+  }
 </style>

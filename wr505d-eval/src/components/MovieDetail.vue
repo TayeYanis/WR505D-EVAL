@@ -676,5 +676,17 @@ strong {
   cursor: pointer;
 }
 
+@media (max-width: 900px) {
+  .detail-movie {
+    width: 75%;
+    font-size: 15px;
+  }
+
+  .modal-content {
+    width: 70%;
+  }
+}
+
+
 
 </style>

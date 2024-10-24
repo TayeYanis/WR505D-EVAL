@@ -606,13 +606,15 @@
     margin-bottom: 10px;
   }
 
+  @media (max-width: 900px) {
+    .list-movies {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      grid-gap: 20px;
+      width: 70%;
+    }
 
-  /*     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    grid-gap: 20px;
-    width: 70%;
-
-    movie-card {
+    .movie-card {
       padding: 5px;
       border: 1px solid #ccc;
       border-radius: 8px;
@@ -623,5 +625,16 @@
       cursor: pointer;
     }
 
-   */
+    .search-bar {
+      font-size: 10px;
+    }
+
+    .page-input {
+      font-size: 12px
+    }
+
+    .modal-content {
+      width: 70%;
+    }
+  }
 </style>

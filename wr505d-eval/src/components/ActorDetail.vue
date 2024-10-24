@@ -128,6 +128,7 @@
       <p class="actors-genre"><strong>Genre :<br></strong> {{ actor.gender }}</p>
       <p><strong>Biographie :<br></strong> {{ actor.bio }}</p>
       <p v-if="actor.deathDate"><strong>Date de décès :<br></strong> {{ formatDate(actor.deathDate) }}</p>
+      <p v-else>Date de décès :<br> Non décèdée,</p>
       <div v-if="actorMovies.length > 0" class="actor-movies">
         <h2>Films liés à cet acteur</h2>
         <div class="movies-list">
@@ -300,6 +301,7 @@ export default {
       const editActorData = {
         ...this.editActorData,
         awards: Number(this.editActorData.awards), // Convertir les récompenses en nombre
+        deathDate: this.editActorData.deathDate || null, // Si la date est vide, assigner null
       };
 
       // Vérification des champs obligatoires
@@ -539,4 +541,14 @@ strong {
   cursor: pointer;
 }
 
+ @media (max-width: 900px) {
+   .detail-actor {
+     width: 85%;
+     font-size: 15px;
+   }
+
+   .modal-content {
+     width: 70%;
+   }
+ }
 </style>

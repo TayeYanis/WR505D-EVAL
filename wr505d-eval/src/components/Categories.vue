@@ -34,7 +34,11 @@
       <li v-for="category in paginatedCategories" :key="category.id">
         {{ category.title }}
         <button @click="openEditModal(category)" class="edit-category-button">Éditer</button>
+        <br>
+        <br>
         <button @click="confirmDeleteCategory(category.id)" class="delete-category-button">Supprimer</button>
+        <br>
+        <br>
       </li>
     </ul>
 
@@ -44,12 +48,11 @@
         <span class="close" @click="closeDeleteModal">&times;</span>
         <h2>Confirmation de suppression</h2>
         <p>Voulez-vous vraiment supprimer la catégorie avec l'ID {{ categoryToDelete }} ?</p>
-        <button @click="deleteCategory" class="confirm-delete-button">Oui, supprimer</button>
+        <button style @click="deleteCategory" class="confirm-delete-button">Oui, supprimer</button>
         <button @click="closeDeleteModal" class="cancel-delete-button">Annuler</button>
       </div>
     </div>
 
-    <p v-else>Il n'y a aucune catégorie trouvée.</p>
     <button @click="showModal = true" class="add-category-button">Ajouter une catégorie</button>
 
     <!-- MODAL POUR AJOUTER UNE CATEGORIE -->
@@ -86,15 +89,6 @@
               class="category-input"
           />
           <p class="input-info">Le titre doit contenir entre 3 et 255 caractères.</p>
-          <input
-              type="text"
-              v-model="editCategoryData.updated_at"
-              placeholder="Date de mise à jour"
-              readonly
-              class="category-input"
-          />
-          <p class="input-info">Date de mise à jour actuelle</p>
-
           <button type="submit" class="add-category-button">Sauvegarder les modifications</button>
         </form>
       </div>
@@ -259,10 +253,6 @@ export default {
           alert('Le titre doit contenir entre 3 et 255 caractères.');
           return;
         }
-
-        // Ajouter l'updated_at avec la date actuelle
-        this.editCategoryData.updated_at = new Date().toISOString(); // Mettre à jour la date
-
         const token = localStorage.getItem('jwt_token'); // Récupérer le token du localStorage
         const response = await fetch(`http://symfony.mmi-troyes.fr:8319/api/categories/${this.editCategoryData.id}`, {
           method: 'PUT', // Méthode pour mettre à jour la catégorie
@@ -423,6 +413,11 @@ h1 {
   border: none;
   cursor: pointer;
   margin-left: 10px;
+  width: 10% !important;
+}
+
+.edit-category-button {
+  width: 10% !important;
 }
 
 .delete-category-button:hover {
@@ -451,6 +446,21 @@ h1 {
 
 .cancel-delete-button:hover {
   background-color: #999;
+}
+
+@media (max-width: 900px) {
+  .delete-category-button {
+    width: 40% !important;
+  }
+
+  .edit-category-button {
+    width: 40% !important;
+  }
+
+  .search-bar {
+    width: 30%;
+    font-size: 8px;
+  }
 }
 
 </style>

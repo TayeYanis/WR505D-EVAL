@@ -501,7 +501,7 @@
     align-items: center;
     justify-content: center;
     font-size: 15px;
-    width: 50%;
+    width: 100%;
     height: 5%;
   }
 
@@ -575,5 +575,45 @@
     font-weight: bold;
     color: gray;
     margin-bottom: 10px;
+  }
+
+  @media (max-width: 900px) {
+    .list-actors {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      grid-gap: 20px;
+      width: 100%;
+    }
+
+    .actor-media {
+      width: 90%;
+    }
+
+    .actor-card {
+      padding: 5px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background-color: #f9f9f9;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    .search-bar {
+      font-size: 10px;
+    }
+
+    .page-input {
+      font-size: 12px
+    }
+
+    .actor-img-container {
+      margin-left: 5%;
+    }
+
+    .modal-content {
+      width: 70%;
+    }
   }
 </style>
