@@ -57,6 +57,7 @@
         <span class="close" @click="closeModal">&times;</span>
         <h2>Ajouter un acteur</h2>
         <form @submit.prevent="addActor" class="formulaire">
+          <p class="input-info">Le Prénom doit contenir entre 3 et 50 caractères.</p>
           <input
               type="text"
               v-model="newActor.firstname"
@@ -64,8 +65,8 @@
               required
               class="actor-input"
           />
-          <p class="input-info">Doit contenir entre 3 et 50 caractères.</p>
 
+          <p class="input-info">Le Nom doit contenir entre 3 et 50 caractères.</p>
           <input
               type="text"
               v-model="newActor.lastname"
@@ -73,8 +74,8 @@
               required
               class="actor-input"
           />
-          <p class="input-info">Doit contenir entre 3 et 50 caractères.</p>
 
+          <p class="input-info">Utilisez le code ISO 3166-1 alpha-2 (ex : FR, AU, CN).</p>
           <input
               type="text"
               v-model="newActor.nationality"
@@ -82,8 +83,8 @@
               required
               class="actor-input"
           />
-          <p class="input-info">Utilisez le code ISO 3166-1 alpha-2 (ex : FR, AU, CN).</p>
 
+          <p class="input-info">Date de naissance</p>
           <input
               type="date"
               v-model="newActor.dob"
@@ -92,6 +93,7 @@
               class="actor-input"
           />
 
+          <p class="input-info">Le nombre de récompenses doit être compris entre 0 et 10.</p>
           <input
               type="number"
               v-model="newActor.awards"
@@ -101,24 +103,24 @@
               required
               class="actor-input"
           />
-          <p class="input-info">Le nombre de récompenses doit être compris entre 4 et 12.</p>
 
+          <p class="input-info">La Biographie doit contenir entre 30 et 300 caractères.</p>
           <textarea
               v-model="newActor.bio"
               placeholder="Biographie (30-300 caractères)"
               required
               class="actor-textarea"
           ></textarea>
-          <p class="input-info">Doit contenir entre 30 et 300 caractères.</p>
 
+          <p class="input-info">Date de décès, Remplir uniquement si l'acteur est décédé.</p>
           <input
               type="date"
               v-model="newActor.deathDate"
               placeholder="Date de décès (laisser vide si toujours vivant)"
               class="actor-input"
           />
-          <p class="input-info">Remplir uniquement si l'acteur est décédé.</p>
 
+          <p class="input-info">Doit être une URL valide (ex : http://image.com).</p>
           <input
               type="text"
               v-model="newActor.media"
@@ -126,7 +128,6 @@
               required
               class="actor-input"
           />
-          <p class="input-info">Doit être une URL valide (ex : http://image.com).</p>
 
           <select v-model="newActor.gender" required class="actor-input">
             <option value="" disabled selected>Choisir un genre</option>
