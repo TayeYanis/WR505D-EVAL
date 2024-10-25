@@ -4,6 +4,14 @@
 
 Ce projet est une application web développée avec **Vue.js v2** qui permet de gérer une base de données d'acteurs, de films et de catégories associées. L'application fournit une interface pour effectuer des opérations de gestion, y compris la création, la lecture, la mise à jour et la suppression (CRUD). En plus de ces fonctionnalités de base, l'application propose également des options de recherche, de pagination et de filtrage, le tout en interagissant avec une API REST via **Axios**.
 
+## Informations de connexion
+
+Un utilisateur et un mot de passe sont présents dans le fichier `app fixtures`. Utilisez les identifiants suivants pour vous connecter :
+
+- **Email** : user@gmail.com
+- **Mot de passe** : password
+
+
 ## Fonctionnalités
 
 ### Gestion des Acteurs, Films et Catégories
@@ -292,6 +300,15 @@ L'application gère les erreurs lors des requêtes API. En cas d'erreur, un mess
 - **Erreur 404** : Acteur ou film non trouvé lors de la récupération des détails.
 - **Erreur 401** : Authentification requise pour accéder aux ressources.
 
+## Remerciements
+
+Professeurs référents :
+
+- Minh Nhat THAI
+- Romain Delon
+
 ## Auteurs
 
 - **Yani Taye** - (https://github.com/TayeYanis)
+
+Tous droits réservés © Yanis TAYE
