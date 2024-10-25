@@ -90,11 +90,97 @@ Ce projet est une application web développée avec **Vue.js v2** qui permet de 
 
   npm install
 
-4. Lancez l'application :
+4. Récupérez le docker-compose.yml afin d'être sur de pouvoir démarer le projet Symfony :
 
-  npm run de 
+  ```
+  version: '3.8'
+  services:
+      web:
+          image: mmi3docker/symfony-2024
+          container_name : symfony-web
+          hostname: symfony-web
+          restart: always
+          ports:
+              - 8319:80
+          depends_on:
+              - db
+  
+          volumes:
+              - ./www/:/var/www/
+              - ./sites/:/etc/apache2/sites-enabled/
+  
+      db:
+          image: mariadb:10.8
+          container_name: symfony-db
+          hostname: symfony-db
+          restart: always
+  
+          volumes:
+              - db-volume:/var/lib/mysql
+  
+          environment:
+              MYSQL_ROOT_PASSWORD: PASSWORD
+              MYSQL_DATABASE: symfony
+              MYSQL_USER: symfony
+              MYSQL_PASSWORD: PASSWORD
+  
+      phpmyadmin:
+          image: phpmyadmin/phpmyadmin
+          container_name: symfony-adminsql
+          hostname: symfony-adminsql
+          restart: always
+          ports:
+              - 8080:80
+          environment:
+              PMA_HOST: db
+              MYSQL_ROOT_PASSWORD: PASSWORD
+              MYSQL_USER: symfony
+              MYSQL_PASSWORD: PASSWORD
+              MYSQL_DATABASE: symfony    
+              
+      maildev:
+          image: maildev/maildev
+          container_name: symfony-mail
+          hostname: symfony-mail
+          command: bin/maildev --web 1080 --smtp 1025 --hide-extensions STARTTLS
+          restart: always
+     
+          ports:
+              - 1080:1080
+  
+  volumes:
+      db-volume:
+  
+  ```
 
-5. Ouvrez votre navigateur et allez au http  indiquer pour voir l'application en action
+5. Démarrez le conteneur Docker :
+
+Avant d'exécuter les commandes suivantes, assurez-vous que votre fichier docker-compose.yml est configuré comme décrit ci-dessus. Ensuite, démarrez votre conteneur Docker en utilisant :
+```
+docker-compose up -d
+```
+
+6. Accédez au terminal du conteneur Symfony :
+
+Utilisez la commande suivante pour accéder au terminal de votre conteneur Symfony :
+```
+docker exec -ti symfony-web /bin/bash
+```
+
+7. Naviguez vers le répertoire du projet :
+Dans le conteneur, allez dans le répertoire de votre projet :
+```
+cd /var/www/WR506D/wr506d
+```
+
+8. Chargez les fixtures dans la base de données :
+Exécutez la commande suivante pour charger les fixtures dans la base de données (cela générera égalemment un utilisateur avec les données indiquer précédamment) :
+```
+php bin/console doctrine:fixtures:load
+```
+
+9. Personnalisez l'URL :
+Assurez-vous que l'URL de votre projet est configurée comme suit : http://symfony.mmi-troyes.fr:8319/. Cela vous permettra d'accéder à l'application via votre navigateur.
 
 ## Utilisation
 
