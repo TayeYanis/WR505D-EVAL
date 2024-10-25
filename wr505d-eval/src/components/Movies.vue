@@ -72,6 +72,7 @@
         <span class="close" @click="closeModal">&times;</span>
         <h2>Ajouter un film</h2>
         <form @submit.prevent="addMovie" class="formulaire">
+          <p class="input-info">Doit contenir entre 3 et 250 caractères.</p>
           <input
               type="text"
               v-model="newMovie.title"
@@ -79,7 +80,7 @@
               required
               class="movie-input"
           />
-          <p class="input-info">Doit contenir entre 3 et 250 caractères.</p>
+
 
           <textarea
               v-model="newMovie.description"
@@ -96,6 +97,7 @@
               class="movie-input"
           />
 
+          <p class="input-info">La durée doit être comprise entre 50 et 200 minutes.</p>
           <input
               type="number"
               v-model="newMovie.duration"
@@ -105,8 +107,8 @@
               required
               class="movie-input"
           />
-          <p class="input-info">La durée doit être comprise entre 50 et 200 minutes.</p>
 
+          <p class="input-info">Le nombre d'entrées doit être compris entre 0 et 1000.</p>
           <input
               type="number"
               v-model="newMovie.entries"
@@ -116,8 +118,8 @@
               required
               class="movie-input"
           />
-          <p class="input-info">Le nombre d'entrées doit être compris entre 0 et 1000.</p>
 
+          <p class="input-info">Le réalisateur, doit contenir entre 3 et 255 caractères.</p>
           <input
               type="text"
               v-model="newMovie.director"
@@ -125,8 +127,8 @@
               required
               class="movie-input"
           />
-          <p class="input-info">Doit contenir entre 3 et 255 caractères.</p>
 
+          <p class="input-info">La note doit être comprise entre 0 et 10.</p>
           <input
               type="text"
               v-model="newMovie.rating"
@@ -135,8 +137,9 @@
               required
               class="movie-input"
           />
-          <p class="input-info">La note doit être comprise entre 0 et 10.</p>
 
+
+          <p class="input-info">Doit être une URL valide (ex : http://image.com).</p>
           <input
               type="text"
               v-model="newMovie.media"
@@ -144,7 +147,6 @@
               required
               class="movie-input"
           />
-          <p class="input-info">Doit être une URL valide (ex : http://image.com).</p>
 
           <div class="dropdown">
             <h3>Acteurs</h3>
