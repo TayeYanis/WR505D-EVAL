@@ -79,11 +79,12 @@ Ce projet est une application web développée avec **Vue.js v2** qui permet de 
 1. Clonez le dépôt sur votre machine locale :
 
    ```bash
-   git clone https://github.com/username/repo-name.git
+   git clone https://github.com/TayeYanis/WR505D-EVAL.git
 
 2. Naviguez dans le répertoire du projet :
 
-  cd repo-name
+  cd WR505D-EVAL
+  cd wr505d-eval
 
 3. Installez les dépendances :
 
@@ -94,3 +95,117 @@ Ce projet est une application web développée avec **Vue.js v2** qui permet de 
   npm run de 
 
 5. Ouvrez votre navigateur et allez au http  indiquer pour voir l'application en action
+
+## Utilisation
+
+1. Connexion
+
+- Ouvrez la page de connexion et entrez vos identifiants pour accéder à l'application.
+- En cas de nouvel utilisateur, utilisez le formulaire d'inscription.
+
+2. Gestion des Acteurs
+
+- Naviguez vers la section des acteurs pour voir la liste complète des acteurs.
+- Utilisez les fonctionnalités de recherche et de filtrage pour trouver des acteurs spécifiques.
+- Cliquez sur "Ajouter un acteur" pour ouvrir le formulaire d'ajout.
+- Pour chaque acteur, vous pouvez consulter ses détails, modifier ses informations ou le supprimer.
+
+3. Gestion des Films
+
+- Accédez à la section des films pour ajouter, modifier ou supprimer des films.
+- Utilisez la fonction de recherche et de filtrage pour trouver des films facilement.
+- Associez des films aux catégories existantes lors de leur ajout.
+
+4. Gestion des Catégories
+
+- Créez ou modifiez des catégories pour mieux organiser les films.
+- Lors de l'ajout ou de la mise à jour d'un film, choisissez les catégories appropriées.
+
+5. Détails de l'Acteur
+
+- Cliquez sur un acteur pour afficher ses détails, y compris les films associés et les récompenses.
+
+## Assertions (Validations)
+
+L'application utilise des assertions pour garantir que les données saisies par les utilisateurs respectent certaines règles avant d'être stockées dans la base de données. Ces validations sont définies dans les entités de l'application Symfony. Voici les assertions mises en place pour les entités Acteur, Film et Catégorie :
+
+- **Acteur :** 
+
+Les validations pour l'entité Acteur sont définies dans le projet Symfony backend :
+ - Nom et Prénom :
+   - Doivent avoir entre 3 et 50 caractères.
+ - Date de Naissance :
+   - Doit être une date valide.
+ - Récompenses :
+   - Doit être un entier entre 0 et 10.
+ - Biographie :
+   - Doit être remplie et avoir entre 30 et 300 caractères.
+- Nationalité :
+  - Doit être un code ISO 3166-1 alpha-2 présent sur ce liens là, https://en.wikipedia.org/wiki/ISO_3166-1#Current_codes (ex: "FR" pour la France, "CN" pour la Chine).
+- Média :
+  - Doit être une URL valide.
+- Genre :
+  - Doit être soit "male" soit "female".
+- Films Associés :
+  - Possibilité d'associer plusieurs films à un acteur.
+
+- **Film :** 
+
+Les validations pour l'entité Film sont également définies dans le projet Symfony backend :
+ - Titre :
+   - Doit avoir entre 3 et 250 caractères.
+ - Description :
+   - Peut être vide mais doit être une chaîne valide.
+ - Date de Sortie :
+   - Doit être une date valide.
+ - Durée :
+   - Doit être un entier entre 50 et 200 minutes.
+- Directeur :
+  - Doit avoir entre 3 et 255 caractères.
+- Évaluations :
+  - Doit être un nombre entre 0 et 10.
+- Catégories Associées :
+  - Possibilité d'associer plusieurs catégories à un film.
+- Acteurs Associés :
+  - Possibilité d'associer plusieurs acteurss à un film.
+
+- **Catégorie :** 
+
+Les validations pour l'entité Catégorie proviennent également du projet Symfony backend :
+ - Titre :
+   - Doit avoir entre 3 et 150 caractères.
+ - Films Associés :
+   - Possibilité d'associer plusieurs films à une catégorie.
+
+## API
+
+L'application interagit avec une API REST pour effectuer les opérations suivantes :
+
+- `GET /api/actors` : Récupérer la liste de tous les acteurs.
+- `POST /api/actors` : Ajouter un nouvel acteur à la base de données.
+- `GET /api/actors/{id}` : Récupérer les détails d'un acteur spécifique.
+- `PATCH /api/actors/{id}` : Mettre à jour les informations d'un acteur existant.
+- `DELETE /api/actors/{id}` : Supprimer un acteur de la base de données.
+
+- `GET /api/movies` : Récupérer la liste de tous les films.
+- `POST /api/movies` : Ajouter un nouveau film.
+- `GET /api/movies/{id}` : Récupérer les détails d'un film spécifique.
+- `PATCH /api/movies/{id}` : Mettre à jour les informations d'un film existant.
+- `DELETE /api/movies/{id}` : Supprimer un film de la base de données.
+
+- `GET /api/categories` : Récupérer la liste de toutes les catégories.
+- `POST /api/categories` : Ajouter une nouvelle catégorie.
+- `PATCH /api/categories/{id}` : Mettre à jour les informations d'une catégorie.
+- `DELETE /api/categories/{id}` : Supprimer une catégorie.
+
+## Gestion des Erreurs
+
+L'application gère les erreurs lors des requêtes API. En cas d'erreur, un message d'erreur est affiché à l'utilisateur. Voici quelques erreurs courantes :
+
+- **Erreur 400** : Requête mal formée, souvent liée à des données manquantes ou invalides.
+- **Erreur 404** : Acteur ou film non trouvé lors de la récupération des détails.
+- **Erreur 401** : Authentification requise pour accéder aux ressources.
+
+## Auteurs
+
+- **Yani Taye** - (https://github.com/TayeYanis)
